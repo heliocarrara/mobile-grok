@@ -17,6 +17,8 @@ import 'detalhes_atividade_screen.dart';
 import 'procurar_lacunas_screen.dart';
 import 'nfc_share_screen.dart';
 import 'nfc_receive_screen.dart';
+import 'qr_share_screen.dart';
+import 'qr_receive_screen.dart';
 import '../services/database_service.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -702,7 +704,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 onEdit: () => _editAtividade(atividade),
                 onDelete: () => _deleteAtividade(atividade),
                 onDuplicate: () => _duplicateAtividade(atividade),
-                onShare: () => _shareAtividadeNfc(atividade),
+                onShare: () => _shareAtividadeQr(atividade),
               ),
             )),
             const SizedBox(height: 24),
@@ -725,7 +727,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 onEdit: () => _editAtividade(atividade),
                 onDelete: () => _deleteAtividade(atividade),
                 onDuplicate: () => _duplicateAtividade(atividade),
-                onShare: () => _shareAtividadeNfc(atividade),
+                onShare: () => _shareAtividadeQr(atividade),
               ),
             )),
           ],
@@ -751,7 +753,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             onEdit: () => _editAtividade(atividade),
             onDelete: () => _deleteAtividade(atividade),
             onDuplicate: () => _duplicateAtividade(atividade),
-            onShare: () => _shareAtividadeNfc(atividade),
+            onShare: () => _shareAtividadeQr(atividade),
           ),
         ),
       );
@@ -1084,6 +1086,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                         await _loadData();
                       },
                     ),
+                    _buildDrawerItem(
+                      icon: Icons.qr_code_scanner,
+                      title: 'Receber via QR Code',
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const QrReceiveScreen()),
+                        );
+                        await _loadData();
+                      },
+                    ),
                     const SizedBox(height: 8),
                     Divider(
                       color: Theme.of(context).dividerColor.withOpacity(0.3),
@@ -1169,6 +1183,15 @@ class _DashboardScreenState extends State<DashboardScreen>
       context,
       MaterialPageRoute(
         builder: (context) => NfcShareScreen(atividade: atividade),
+      ),
+    );
+  }
+
+  void _shareAtividadeQr(Atividade atividade) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QrShareScreen(atividade: atividade),
       ),
     );
   }

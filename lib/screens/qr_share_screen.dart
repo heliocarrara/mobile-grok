@@ -159,10 +159,10 @@ class _QrShareScreenState extends State<QrShareScreen>
               fontWeight: FontWeight.w600,
             ),
           ),
-          if (widget.atividade.descricao.isNotEmpty) ...[
+          if (widget.atividade.descricao?.isNotEmpty == true) ...[
             const SizedBox(height: 8),
             Text(
-              widget.atividade.descricao,
+              widget.atividade.descricao!,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],

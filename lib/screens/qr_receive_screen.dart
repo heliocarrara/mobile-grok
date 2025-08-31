@@ -27,6 +27,14 @@ class _QrReceiveScreenState extends State<QrReceiveScreen> {
     super.dispose();
   }
 
+  void _resetState() {
+    setState(() {
+      _textController.clear();
+      _isProcessing = false;
+      _scannedActivity = null;
+    });
+  }
+
   void _handleQrData() async {
     final qrData = _textController.text.trim();
     
@@ -125,10 +133,10 @@ class _QrReceiveScreenState extends State<QrReceiveScreen> {
                       fontSize: 16,
                     ),
                   ),
-                  if (activity.descricao.isNotEmpty) ...[
+                  if (activity.descricao?.isNotEmpty == true) ...[
                     const SizedBox(height: 8),
                     Text(
-                      activity.descricao,
+                      activity.descricao!,
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 14,
@@ -162,7 +170,7 @@ class _QrReceiveScreenState extends State<QrReceiveScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _resetScanning();
+              _resetState();
             },
             child: const Text('Cancelar'),
           ),
@@ -204,7 +212,7 @@ class _QrReceiveScreenState extends State<QrReceiveScreen> {
     } catch (e) {
       _showErrorDialog('Erro ao salvar', 
           'Não foi possível adicionar a atividade: $e');
-      _resetScanning();
+      _resetState();
     }
   }
 
@@ -224,7 +232,7 @@ class _QrReceiveScreenState extends State<QrReceiveScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _resetScanning();
+              _resetState();
             },
             child: const Text('OK'),
           ),
@@ -244,6 +252,7 @@ class _QrReceiveScreenState extends State<QrReceiveScreen> {
         actions: [
           IconButton(
             onPressed: () {
+              _resetState();
               setState(() {
                 _showScanner = !_showScanner;
               });
