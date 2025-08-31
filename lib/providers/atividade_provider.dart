@@ -141,9 +141,9 @@ class AtividadeProvider with ChangeNotifier {
   }
 
   // Toggle atividade (wrapper para toggleAtividadeConcluida)
-  void toggleAtividade(Atividade atividade) {
+  Future<void> toggleAtividade(Atividade atividade) async {
     if (atividade.id != null) {
-      toggleAtividadeConcluida(atividade.id!);
+      await toggleAtividadeConcluida(atividade.id!);
     }
   }
 

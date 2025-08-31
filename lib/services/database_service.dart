@@ -300,38 +300,10 @@ class DatabaseService {
     if (atividades.isEmpty) return 0.0;
 
     final concluidas = atividades.where((a) => a.concluida).length;
-    return (concluidas / atividades.length) * 100;
+    return concluidas / atividades.length;
   }
 
-  // Obter atividade por ID
-  Future<Atividade?> getAtividadeById(int id) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'atividades',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
 
-    if (maps.isEmpty) return null;
-
-    return Atividade(
-      id: maps[0]['id'],
-      titulo: maps[0]['titulo'],
-      descricao: maps[0]['descricao'],
-      categoria: CategoriaEnum.values.firstWhere(
-        (e) => e.name == maps[0]['categoria'],
-      ),
-      dataHora: DateTime.parse(maps[0]['dataHora']),
-      duracao: maps[0]['duracao'],
-      concluida: maps[0]['concluida'] == 1,
-      repeticao: RepeticaoEnum.values.firstWhere(
-        (e) => e.name == maps[0]['repeticao'],
-      ),
-      prioridade: maps[0]['prioridade'],
-      meta: maps[0]['meta'],
-      jsonExtra: maps[0]['jsonExtra'],
-    );
-  }
 
   // Atualizar data/hora da atividade
   Future<int> updateAtividadeDataHora(int id, DateTime novaDataHora) async {
@@ -344,74 +316,30 @@ class DatabaseService {
     );
   }
 
-  // Obter todas as atividades
-  Future<List<Atividade>> getAllAtividades() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'atividades',
-      orderBy: 'dataHora ASC',
-    );
 
-    return List.generate(maps.length, (i) {
-      return Atividade(
-        id: maps[i]['id'],
-        titulo: maps[i]['titulo'],
-        descricao: maps[i]['descricao'],
-        categoria: CategoriaEnum.values.firstWhere(
-          (e) => e.name == maps[i]['categoria'],
-        ),
-        dataHora: DateTime.parse(maps[i]['dataHora']),
-        duracao: maps[i]['duracao'],
-        concluida: maps[i]['concluida'] == 1,
-        repeticao: RepeticaoEnum.values.firstWhere(
-          (e) => e.name == maps[i]['repeticao'],
-        ),
-        prioridade: maps[i]['prioridade'],
-        meta: maps[i]['meta'],
-        jsonExtra: maps[i]['jsonExtra'],
-      );
-    });
-  }
 
-  // Obter todas as categorias
-  Future<List<Categoria>> getAllCategorias() async {
+  // Inicializar categorias padrão
+  Future<void> initializeDefaultCategories() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('categorias');
     
-    return List.generate(maps.length, (i) {
-      return Categoria(
-        id: maps[i]['id'],
-        nome: maps[i]['nome'],
-        cor: maps[i]['cor'],
-        icone: maps[i]['icone'],
-      );
-    });
-  }
+    // Verificar se já existem categorias
+    final existingCategories = await db.query('categorias');
+    if (existingCategories.isNotEmpty) return;
 
-  // Inserir categoria
-  Future<int> insertCategoria(Categoria categoria) async {
-    final db = await database;
-    return await db.insert('categorias', {
-      'nome': categoria.nome,
-      'cor': categoria.cor,
-      'icone': categoria.icone,
-    });
-  }
+    // Inserir categorias padrão
+    final defaultCategories = [
+      {'nome': 'Faculdade', 'cor': '#4CAF50', 'icone': 'school'},
+      {'nome': 'Casa', 'cor': '#FF9800', 'icone': 'home'},
+      {'nome': 'Lazer', 'cor': '#2196F3', 'icone': 'sports_esports'},
+      {'nome': 'Alimentação', 'cor': '#FF5722', 'icone': 'restaurant'},
+      {'nome': 'Finanças', 'cor': '#4CAF50', 'icone': 'account_balance_wallet'},
+      {'nome': 'Trabalho', 'cor': '#9C27B0', 'icone': 'work'},
+      {'nome': 'Saúde', 'cor': '#F44336', 'icone': 'favorite'},
+      {'nome': 'Outros', 'cor': '#607D8B', 'icone': 'more_horiz'},
+    ];
 
-  // Inserir atividade
-  Future<int> insertAtividade(Atividade atividade) async {
-    final db = await database;
-    return await db.insert('atividades', {
-      'titulo': atividade.titulo,
-      'descricao': atividade.descricao,
-      'categoria': atividade.categoria.name,
-      'dataHora': atividade.dataHora.toIso8601String(),
-      'duracao': atividade.duracao,
-      'concluida': atividade.concluida ? 1 : 0,
-      'repeticao': atividade.repeticao.name,
-      'prioridade': atividade.prioridade,
-      'meta': atividade.meta,
-      'jsonExtra': atividade.jsonExtra,
-    });
+    for (final category in defaultCategories) {
+      await db.insert('categorias', category);
+    }
   }
 }

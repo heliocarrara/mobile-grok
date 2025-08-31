@@ -34,6 +34,7 @@ enum CategoriaEnum {
   }
 
   String get name => toString().split('.').last;
+  String get categoriaDisplayName => displayName;
 }
 
 enum RepeticaoEnum {
@@ -54,6 +55,8 @@ enum RepeticaoEnum {
         return 'Mensal';
     }
   }
+
+  String get repeticaoDisplayName => displayName;
 }
 
 @JsonSerializable()
@@ -116,4 +119,5 @@ class Atividade {
   }
 
   String get categoriaDisplayName => categoria.displayName;
+  String get repeticaoDisplayName => repeticao.displayName;
 }

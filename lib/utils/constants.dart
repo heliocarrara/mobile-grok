@@ -15,10 +15,10 @@ class AppConstants {
   static const String backupFolderName = 'MobileGrok';
 
   // Configurações de UI
-  static const double defaultBorderRadius = 16.0;
-  static const double cardBorderRadius = 20.0;
-  static const double buttonBorderRadius = 16.0;
-  static const double inputBorderRadius = 16.0;
+  static const double defaultBorderRadius = 16;
+  static const double cardBorderRadius = 20;
+  static const double buttonBorderRadius = 16;
+  static const double inputBorderRadius = 16;
 
   // Configurações de prioridade
   static const int minPrioridade = 1;

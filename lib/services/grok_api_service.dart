@@ -32,7 +32,7 @@ class GrokApiService {
 
     try {
       // Primeiro, tentar processar comandos básicos localmente
-      final localResponse = _processLocalCommand(userMessage, provider);
+      final localResponse = await _processLocalCommand(userMessage, provider);
       if (localResponse != null) {
         return localResponse;
       }
@@ -48,7 +48,7 @@ class GrokApiService {
   }
 
   // Processar comandos básicos localmente
-  ChatResponse? _processLocalCommand(String message, AtividadeProvider provider) {
+  Future<ChatResponse?> _processLocalCommand(String message, AtividadeProvider provider) async {
     final lowerMessage = message.toLowerCase().trim();
 
     // Comandos de ajuda
@@ -84,7 +84,7 @@ class GrokApiService {
     // Comando para mostrar progresso
     if (lowerMessage.contains('progresso') || lowerMessage.contains('progress')) {
       final hoje = DateTime.now();
-      final progresso = provider.getProgressoDiario(hoje);
+      final progresso = await provider.getProgressoDiario(hoje);
       return ChatResponse(
         message: 'Seu progresso de hoje: ${progresso.toStringAsFixed(1)}%',
         type: ChatResponseType.info,

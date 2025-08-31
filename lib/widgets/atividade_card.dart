@@ -118,6 +118,7 @@ class _AtividadeCardState extends State<AtividadeCard>
                       ),
                     ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildCheckbox(categoriaColor),
                         const SizedBox(width: 16),
@@ -132,6 +133,7 @@ class _AtividadeCardState extends State<AtividadeCard>
                             ],
                           ),
                         ),
+                        const SizedBox(width: 8),
                         _buildTimeInfo(),
                       ],
                     ),
@@ -216,25 +218,24 @@ class _AtividadeCardState extends State<AtividadeCard>
   }
 
   Widget _buildDetails(Color categoriaColor) {
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
       children: [
         _buildCategoriaChip(categoriaColor),
-        const SizedBox(width: 8),
         _buildPrioridadeChip(),
-        if (widget.atividade.duracao != null) ...[
-          const SizedBox(width: 8),
+        if (widget.atividade.duracao != null)
           _buildDuracaoChip(),
-        ],
       ],
     );
   }
 
   Widget _buildCategoriaChip(Color categoriaColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: categoriaColor.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: categoriaColor.withOpacity(0.3),
           width: 1,
@@ -245,17 +246,20 @@ class _AtividadeCardState extends State<AtividadeCard>
         children: [
           Icon(
             _getCategoriaIcon(widget.atividade.categoria.name),
-            size: 14,
+            size: 12,
             color: categoriaColor,
           ),
           const SizedBox(width: 4),
-          Text(
-            widget.atividade.categoria.name.toUpperCase(),
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: categoriaColor,
-              letterSpacing: 0.5,
+          Flexible(
+            child: Text(
+              widget.atividade.categoria.name.toUpperCase(),
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: categoriaColor,
+                letterSpacing: 0.5,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -295,7 +299,7 @@ class _AtividadeCardState extends State<AtividadeCard>
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
@@ -307,7 +311,7 @@ class _AtividadeCardState extends State<AtividadeCard>
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 9,
           fontWeight: FontWeight.w600,
           color: color,
         ),
@@ -317,7 +321,7 @@ class _AtividadeCardState extends State<AtividadeCard>
 
   Widget _buildDuracaoChip() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: AppTheme.textSecondaryColor.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
@@ -331,14 +335,14 @@ class _AtividadeCardState extends State<AtividadeCard>
         children: [
           Icon(
             Icons.access_time,
-            size: 12,
+            size: 10,
             color: AppTheme.textSecondaryColor,
           ),
           const SizedBox(width: 2),
           Text(
-            '${widget.atividade.duracao}min',
+            '${widget.atividade.duracao}m',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.w600,
               color: AppTheme.textSecondaryColor,
             ),
@@ -374,12 +378,13 @@ class _AtividadeCardState extends State<AtividadeCard>
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: timeColor.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: timeColor.withOpacity(0.3),
               width: 1,
@@ -388,10 +393,11 @@ class _AtividadeCardState extends State<AtividadeCard>
           child: Text(
             timeText,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
               color: timeColor,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         if (!widget.atividade.concluida && !isAtrasada) ...[
@@ -399,9 +405,10 @@ class _AtividadeCardState extends State<AtividadeCard>
           Text(
             _getTimeAgo(widget.atividade.dataHora),
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               color: AppTheme.textLightColor,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ],

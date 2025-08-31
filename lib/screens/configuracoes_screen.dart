@@ -22,8 +22,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
   final NotificationService _notificationService = NotificationService();
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: const Text('Configurações'),
       ),
@@ -41,10 +40,8 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
+  Widget _buildSectionHeader(String title) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
@@ -54,10 +51,8 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
         ),
       ),
     );
-  }
 
-  Widget _buildNotificationSettings() {
-    return Card(
+  Widget _buildNotificationSettings() => Card(
       child: Column(
         children: [
           SwitchListTile(
@@ -87,10 +82,8 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildAppearanceSettings() {
-    return Consumer<ThemeProvider>(
+  Widget _buildAppearanceSettings() => Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return Card(
           child: Column(
@@ -116,10 +109,8 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
         );
       },
     );
-  }
 
-  Widget _buildDataSettings() {
-    return Card(
+  Widget _buildDataSettings() => Card(
       child: Column(
         children: [
           ListTile(
@@ -148,7 +139,6 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
         ],
       ),
     );
-  }
 
   Future<void> _selecionarHoraInicio() async {
     final hora = await showTimePicker(
@@ -202,9 +192,20 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
         allowMultiple: false,
       );
 
-      if (result != null && result.files.isNotEmpty) {
-        final filePath = result.files.first.path!;
-        
+        if (result != null && result.files.isNotEmpty) {
+        final String? filePath = result.files.first.path;
+        if (filePath == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Caminho do arquivo inválido'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+          }
+          return;
+        }
+
         // Validar arquivo
         final isValid = await _backupService.validateBackupFile(filePath);
         if (!isValid) {
@@ -244,7 +245,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
 
         if (confirmacao == true) {
           setState(() => _isLoading = true);
-          
+
           await _backupService.importData(filePath);
           
           if (mounted) {

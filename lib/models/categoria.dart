@@ -3,11 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'categoria.g.dart';
 
 @JsonSerializable()
-class Categoria {
-  final int? id;
-  final String nome;
-  final String cor; // hex color
-  final String icone; // icon reference
+class Categoria { // icon reference
 
   Categoria({
     this.id,
@@ -17,6 +13,10 @@ class Categoria {
   });
 
   factory Categoria.fromJson(Map<String, dynamic> json) => _$CategoriaFromJson(json);
+  final int? id;
+  final String nome;
+  final String cor; // hex color
+  final String icone;
   Map<String, dynamic> toJson() => _$CategoriaToJson(this);
 
   Categoria copyWith({
@@ -24,12 +24,10 @@ class Categoria {
     String? nome,
     String? cor,
     String? icone,
-  }) {
-    return Categoria(
+  }) => Categoria(
       id: id ?? this.id,
       nome: nome ?? this.nome,
       cor: cor ?? this.cor,
       icone: icone ?? this.icone,
     );
-  }
 }

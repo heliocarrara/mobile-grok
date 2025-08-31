@@ -29,8 +29,11 @@ class NotificationService {
   }
 
   Future<void> requestPermissions() async {
-    await _notifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()?.requestPermission();
+    final androidPlugin = _notifications.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin != null) {
+      await androidPlugin.requestNotificationsPermission();
+    }
   }
 
   Future<void> scheduleAtividadeNotification(Atividade atividade) async {
@@ -59,9 +62,7 @@ class NotificationService {
             presentSound: true,
           ),
         ),
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     }
   }
@@ -76,8 +77,8 @@ class NotificationService {
           'atividades_channel',
           'Atividades',
           channelDescription: 'Notificações de atividades',
-          importance: Importance.medium,
-          priority: Priority.medium,
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
           icon: '@mipmap/ic_launcher',
         ),
         iOS: DarwinNotificationDetails(

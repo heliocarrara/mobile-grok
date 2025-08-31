@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import '../utils/theme.dart';
 
 class LoadingWidget extends StatefulWidget {
-  final String? message;
-  final double size;
-  final Color? color;
 
   const LoadingWidget({
     super.key,
@@ -12,6 +9,9 @@ class LoadingWidget extends StatefulWidget {
     this.size = 50.0,
     this.color,
   });
+  final String? message;
+  final double size;
+  final Color? color;
 
   @override
   State<LoadingWidget> createState() => _LoadingWidgetState();
@@ -73,8 +73,7 @@ class _LoadingWidgetState extends State<LoadingWidget>
         children: [
           AnimatedBuilder(
             animation: Listenable.merge([_rotationAnimation, _pulseAnimation]),
-            builder: (context, child) {
-              return Transform.scale(
+            builder: (context, child) => Transform.scale(
                 scale: _pulseAnimation.value,
                 child: Transform.rotate(
                   angle: _rotationAnimation.value * 2 * 3.14159,
@@ -106,8 +105,7 @@ class _LoadingWidgetState extends State<LoadingWidget>
                     ),
                   ),
                 ),
-              );
-            },
+              ),
           ),
           if (widget.message != null) ...[
             const SizedBox(height: 16),
@@ -126,9 +124,6 @@ class _LoadingWidgetState extends State<LoadingWidget>
 }
 
 class LoadingOverlay extends StatelessWidget {
-  final Widget child;
-  final bool isLoading;
-  final String? loadingMessage;
 
   const LoadingOverlay({
     super.key,
@@ -136,10 +131,12 @@ class LoadingOverlay extends StatelessWidget {
     required this.isLoading,
     this.loadingMessage,
   });
+  final Widget child;
+  final bool isLoading;
+  final String? loadingMessage;
 
   @override
-  Widget build(BuildContext context) {
-    return Stack(
+  Widget build(BuildContext context) => Stack(
       children: [
         child,
         if (isLoading)
@@ -151,5 +148,4 @@ class LoadingOverlay extends StatelessWidget {
           ),
       ],
     );
-  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'providers/atividade_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/dashboard_screen.dart';
@@ -8,6 +9,9 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar dados de localização para formatação de data
+  await initializeDateFormatting('pt_BR', null);
   
   // Inicializar serviço de notificações
   await NotificationService().initialize();

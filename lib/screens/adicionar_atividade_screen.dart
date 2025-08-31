@@ -6,9 +6,9 @@ import '../providers/atividade_provider.dart';
 import '../utils/theme.dart';
 
 class AdicionarAtividadeScreen extends StatefulWidget {
-  final Atividade? atividade;
 
   const AdicionarAtividadeScreen({super.key, this.atividade});
+  final Atividade? atividade;
 
   @override
   State<AdicionarAtividadeScreen> createState() => _AdicionarAtividadeScreenState();
@@ -36,15 +36,18 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
   }
 
   void _preencherFormulario() {
-    final atividade = widget.atividade!;
-    _tituloController.text = atividade.titulo;
-    _descricaoController.text = atividade.descricao ?? '';
-    _metaController.text = atividade.meta ?? '';
-    _categoriaSelecionada = atividade.categoria;
-    _dataHoraSelecionada = atividade.dataHora;
-    _duracao = atividade.duracao;
-    _repeticaoSelecionada = atividade.repeticao;
-    _prioridadeSelecionada = atividade.prioridade;
+  // widget.atividade is checked before calling this method in initState,
+  // assert non-null here and use a local non-nullable variable so the
+  // analyzer can treat fields as non-nullable.
+  final Atividade atividade = widget.atividade!;
+  _tituloController.text = atividade.titulo;
+  _descricaoController.text = atividade.descricao ?? '';
+  _metaController.text = atividade.meta ?? '';
+  _categoriaSelecionada = atividade.categoria;
+  _dataHoraSelecionada = atividade.dataHora;
+  _duracao = atividade.duracao;
+  _repeticaoSelecionada = atividade.repeticao;
+  _prioridadeSelecionada = atividade.prioridade;
   }
 
   @override
@@ -56,8 +59,7 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: Text(widget.atividade != null ? 'Editar Atividade' : 'Nova Atividade'),
         actions: [
@@ -94,10 +96,8 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
         ),
       ),
     );
-  }
 
-  Widget _buildTituloField() {
-    return TextFormField(
+  Widget _buildTituloField() => TextFormField(
       controller: _tituloController,
       decoration: const InputDecoration(
         labelText: 'Título *',
@@ -110,10 +110,8 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
         return null;
       },
     );
-  }
 
-  Widget _buildDescricaoField() {
-    return TextFormField(
+  Widget _buildDescricaoField() => TextFormField(
       controller: _descricaoController,
       decoration: const InputDecoration(
         labelText: 'Descrição (opcional)',
@@ -121,10 +119,8 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
       ),
       maxLines: 3,
     );
-  }
 
-  Widget _buildCategoriaField() {
-    return DropdownButtonFormField<CategoriaEnum>(
+  Widget _buildCategoriaField() => DropdownButtonFormField<CategoriaEnum>(
       value: _categoriaSelecionada,
       decoration: const InputDecoration(
         labelText: 'Categoria *',
@@ -153,10 +149,8 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
         }
       },
     );
-  }
 
-  Widget _buildDataHoraField() {
-    return InkWell(
+  Widget _buildDataHoraField() => InkWell(
       onTap: _selecionarDataHora,
       child: InputDecorator(
         decoration: const InputDecoration(
@@ -169,10 +163,8 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
         ),
       ),
     );
-  }
 
-  Widget _buildDuracaoField() {
-    return TextFormField(
+  Widget _buildDuracaoField() => TextFormField(
       decoration: const InputDecoration(
         labelText: 'Duração (minutos, opcional)',
         prefixIcon: Icon(Icons.access_time),
@@ -185,10 +177,8 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
       },
       initialValue: _duracao?.toString() ?? '',
     );
-  }
 
-  Widget _buildPrioridadeField() {
-    return Column(
+  Widget _buildPrioridadeField() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -217,10 +207,8 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
         ),
       ],
     );
-  }
 
-  Widget _buildRepeticaoField() {
-    return DropdownButtonFormField<RepeticaoEnum>(
+  Widget _buildRepeticaoField() => DropdownButtonFormField<RepeticaoEnum>(
       value: _repeticaoSelecionada,
       decoration: const InputDecoration(
         labelText: 'Repetição',
@@ -240,10 +228,8 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
         }
       },
     );
-  }
 
-  Widget _buildMetaField() {
-    return TextFormField(
+  Widget _buildMetaField() => TextFormField(
       controller: _metaController,
       decoration: const InputDecoration(
         labelText: 'Meta (opcional)',
@@ -251,10 +237,8 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
       ),
       maxLines: 2,
     );
-  }
 
-  Widget _buildActionButtons() {
-    return Row(
+  Widget _buildActionButtons() => Row(
       children: [
         Expanded(
           child: OutlinedButton(
@@ -277,7 +261,6 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
         ),
       ],
     );
-  }
 
   Future<void> _selecionarDataHora() async {
     final data = await showDatePicker(

@@ -8,9 +8,9 @@ import '../models/configuracao.dart';
 import 'database_service.dart';
 
 class BackupService {
-  static final BackupService _instance = BackupService._internal();
   factory BackupService() => _instance;
   BackupService._internal();
+  static final BackupService _instance = BackupService._internal();
 
   final DatabaseService _databaseService = DatabaseService();
 
@@ -19,8 +19,7 @@ class BackupService {
     required List<Atividade> atividades,
     required List<Categoria> categorias,
     required List<Configuracao> configuracoes,
-  }) {
-    return {
+  }) => {
       'version': '1.0',
       'timestamp': DateTime.now().toIso8601String(),
       'data': {
@@ -29,7 +28,6 @@ class BackupService {
         'configuracoes': configuracoes.map((c) => c.toJson()).toList(),
       },
     };
-  }
 
   // Exportar dados para JSON
   Future<String> exportData() async {
@@ -112,13 +110,11 @@ class BackupService {
     final db = await _databaseService.database;
     final List<Map<String, dynamic>> maps = await db.query('configuracoes');
     
-    return List.generate(maps.length, (i) {
-      return Configuracao(
+    return List.generate(maps.length, (i) => Configuracao(
         id: maps[i]['id'],
         chave: maps[i]['chave'],
         valor: maps[i]['valor'],
-      );
-    });
+      ));
   }
 
   // Limpar todos os dados

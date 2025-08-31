@@ -7,12 +7,12 @@ import '../utils/theme.dart';
 import 'adicionar_atividade_screen.dart';
 
 class DetalhesAtividadeScreen extends StatefulWidget {
-  final Atividade atividade;
 
   const DetalhesAtividadeScreen({
     super.key,
     required this.atividade,
   });
+  final Atividade atividade;
 
   @override
   State<DetalhesAtividadeScreen> createState() => _DetalhesAtividadeScreenState();
@@ -29,8 +29,7 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: const Text('Detalhes da Atividade'),
         actions: [
@@ -60,10 +59,8 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
               ),
             ),
     );
-  }
 
-  Widget _buildHeader() {
-    return Card(
+  Widget _buildHeader() => Card(
       elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -122,10 +119,8 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
         ),
       ),
     );
-  }
 
-  Widget _buildInfoSection() {
-    return Card(
+  Widget _buildInfoSection() => Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -152,10 +147,8 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
         ),
       ),
     );
-  }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
+  Widget _buildInfoRow(String label, String value) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,10 +172,8 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildActionsSection() {
-    return Card(
+  Widget _buildActionsSection() => Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -270,7 +261,6 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
         ),
       ),
     );
-  }
 
   Color _getCategoriaColor() {
     switch (_atividade.categoria) {

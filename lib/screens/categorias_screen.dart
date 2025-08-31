@@ -118,7 +118,6 @@ class CategoriasScreen extends StatelessWidget {
           ),
         ),
         onTap: () {
-          _editarCategoria(categoria);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Categoria: $nome'),
@@ -130,26 +129,5 @@ class CategoriasScreen extends StatelessWidget {
     );
   }
 
-  void _editarCategoria(Categoria categoria) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Editar ${categoria.nome}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Funcionalidade de edição de categorias será implementada em breve.'),
-            const SizedBox(height: 16),
-            Text('Por enquanto, as categorias são predefinidas e não podem ser editadas.'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
+
 }

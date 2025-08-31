@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '../utils/theme.dart';
 
-class ProgressIndicator extends StatefulWidget {
+class CustomProgressIndicator extends StatefulWidget {
   final double progress;
   final String? label;
   final Color? color;
   final double height;
   final bool showPercentage;
 
-  const ProgressIndicator({
+  const CustomProgressIndicator({
     super.key,
     required this.progress,
     this.label,
@@ -18,10 +18,10 @@ class ProgressIndicator extends StatefulWidget {
   });
 
   @override
-  State<ProgressIndicator> createState() => _ProgressIndicatorState();
+  State<CustomProgressIndicator> createState() => _CustomProgressIndicatorState();
 }
 
-class _ProgressIndicatorState extends State<ProgressIndicator>
+class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _progressAnimation;
@@ -44,7 +44,7 @@ class _ProgressIndicatorState extends State<ProgressIndicator>
   }
 
   @override
-  void didUpdateWidget(ProgressIndicator oldWidget) {
+  void didUpdateWidget(CustomProgressIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.progress != widget.progress) {
       _progressAnimation = Tween<double>(

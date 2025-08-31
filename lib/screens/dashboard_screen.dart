@@ -175,7 +175,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildSliverAppBar() {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 140,
       floating: false,
       pinned: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -204,6 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            const SizedBox(height: 4),
                             Text(
                               'Organize sua vida com IA',
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -238,17 +239,13 @@ class _DashboardScreenState extends State<DashboardScreen>
       title: Row(
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DateFormat('EEEE, d MMMM', 'pt_BR').format(_selectedDate),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+            child: Text(
+              DateFormat('EEEE, d MMMM', 'pt_BR').format(_selectedDate),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           IconButton(
@@ -315,7 +312,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             ],
           ),
           const SizedBox(height: 16),
-          ProgressIndicator(
+          CustomProgressIndicator(
             progress: _progressoDiario,
             label: 'Atividades Concluídas',
             height: 16,
@@ -336,6 +333,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               decoration: const InputDecoration(
                 labelText: 'Categoria',
                 prefixIcon: Icon(Icons.filter_list),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               items: [
                 const DropdownMenuItem(
@@ -344,7 +342,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 ...CategoriaEnum.values.map((categoria) => DropdownMenuItem(
                   value: categoria,
-                  child: Text(categoria.displayName),
+                  child: Text(
+                    categoria.displayName,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 )),
               ],
               onChanged: (value) {
@@ -359,6 +360,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               decoration: const InputDecoration(
                 labelText: 'Prioridade',
                 prefixIcon: Icon(Icons.priority_high),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               items: [
                 const DropdownMenuItem(
@@ -385,7 +387,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     
     if (atividades.isEmpty) {
       return Container(
-        margin: const EdgeInsets.all(20),
+        margin: const EdgeInsets.symmetric(horizontal: 20),
         padding: const EdgeInsets.all(40),
         child: Column(
           children: [
@@ -395,20 +397,20 @@ class _DashboardScreenState extends State<DashboardScreen>
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
-                         Text(
-               AppConstants.emptyStateTitle,
-               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-               ),
-             ),
-             const SizedBox(height: 8),
-             Text(
-               AppConstants.emptyStateMessage,
-               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-               ),
-               textAlign: TextAlign.center,
-             ),
+            Text(
+              AppConstants.emptyStateTitle,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              AppConstants.emptyStateMessage,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       );
@@ -425,7 +427,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final concluidas = atividades.where((a) => a.concluida).toList();
 
     return Container(
-      margin: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -494,8 +496,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     ).then((_) => _loadData());
   }
 
-  void _toggleAtividade(Atividade atividade) {
-    context.read<AtividadeProvider>().toggleAtividade(atividade);
+  Future<void> _toggleAtividade(Atividade atividade) async {
+    await context.read<AtividadeProvider>().toggleAtividade(atividade);
+    _updateProgresso();
   }
 
   void _editAtividade(Atividade atividade) {

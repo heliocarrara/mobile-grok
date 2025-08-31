@@ -39,8 +39,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: const Text('Assistente IA'),
         actions: [
@@ -85,10 +84,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildMessageInput() {
-    return Container(
+  Widget _buildMessageInput() => Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -127,7 +124,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         ],
       ),
     );
-  }
 
   void _enviarMensagem() {
     final message = _messageController.text.trim();
@@ -213,9 +209,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              setState(() {
-                _messages.clear();
-              });
+              setState(_messages.clear);
               _addBotMessage(
                 'Chat limpo! Como posso ajudar você hoje?',
               );
@@ -230,10 +224,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 }
 
 class ChatMessage extends StatelessWidget {
-  final String text;
-  final bool isUser;
-  final DateTime timestamp;
-  final ChatResponseType? responseType;
 
   const ChatMessage({
     super.key,
@@ -242,10 +232,13 @@ class ChatMessage extends StatelessWidget {
     required this.timestamp,
     this.responseType,
   });
+  final String text;
+  final bool isUser;
+  final DateTime timestamp;
+  final ChatResponseType? responseType;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,7 +305,6 @@ class ChatMessage extends StatelessWidget {
         ],
       ),
     );
-  }
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();

@@ -4,9 +4,6 @@ part 'configuracao.g.dart';
 
 @JsonSerializable()
 class Configuracao {
-  final int? id;
-  final String chave;
-  final String valor;
 
   Configuracao({
     this.id,
@@ -15,17 +12,18 @@ class Configuracao {
   });
 
   factory Configuracao.fromJson(Map<String, dynamic> json) => _$ConfiguracaoFromJson(json);
+  final int? id;
+  final String chave;
+  final String valor;
   Map<String, dynamic> toJson() => _$ConfiguracaoToJson(this);
 
   Configuracao copyWith({
     int? id,
     String? chave,
     String? valor,
-  }) {
-    return Configuracao(
+  }) => Configuracao(
       id: id ?? this.id,
       chave: chave ?? this.chave,
       valor: valor ?? this.valor,
     );
-  }
 }
