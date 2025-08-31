@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../models/atividade.dart';
 import '../services/database_service.dart';
+import '../services/notification_service.dart';
 
 class AtividadeProvider with ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();
+  final NotificationService _notificationService = NotificationService();
   List<Atividade> _atividades = [];
   List<Atividade> _atividadesFiltradas = [];
   bool _isLoading = false;
@@ -54,6 +56,10 @@ class AtividadeProvider with ChangeNotifier {
       final novaAtividade = atividade.copyWith(id: id);
       _atividades.add(novaAtividade);
       _aplicarFiltros();
+      
+      // Schedule notification for the new activity
+      await _notificationService.scheduleAtividadeNotification(novaAtividade);
+      
       notifyListeners();
       return true;
     } catch (e) {
@@ -71,6 +77,10 @@ class AtividadeProvider with ChangeNotifier {
       if (index != -1) {
         _atividades[index] = atividade;
         _aplicarFiltros();
+        
+        // Reschedule notification for the updated activity
+        await _notificationService.scheduleAtividadeNotification(atividade);
+        
         notifyListeners();
       }
       return true;
@@ -84,6 +94,9 @@ class AtividadeProvider with ChangeNotifier {
   // Deletar atividade
   Future<bool> deleteAtividade(int id) async {
     try {
+      // Cancel notification before deleting
+      await _notificationService.cancelAtividadeNotification(id);
+      
       await _databaseService.deleteAtividade(id);
       _atividades.removeWhere((a) => a.id == id);
       _aplicarFiltros();
@@ -106,8 +119,19 @@ class AtividadeProvider with ChangeNotifier {
       
       final index = _atividades.indexWhere((a) => a.id == id);
       if (index != -1) {
-        _atividades[index] = atividade.copyWith(concluida: novaConcluida);
+        final atividadeAtualizada = atividade.copyWith(concluida: novaConcluida);
+        _atividades[index] = atividadeAtualizada;
         _aplicarFiltros();
+        
+        // Handle notification based on completion status
+        if (novaConcluida) {
+          // Cancel notification when task is completed
+          await _notificationService.cancelAtividadeNotification(id);
+        } else {
+          // Reschedule notification when task is uncompleted
+          await _notificationService.scheduleAtividadeNotification(atividadeAtualizada);
+        }
+        
         notifyListeners();
       }
       return true;

@@ -247,6 +247,20 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
+                onPressed: _duplicarAtividade,
+                icon: const Icon(Icons.copy),
+                label: const Text('Duplicar Atividade'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.infoColor,
+                  side: const BorderSide(color: AppTheme.infoColor),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
                 onPressed: _confirmarExclusao,
                 icon: const Icon(Icons.delete),
                 label: const Text('Excluir Atividade'),
@@ -502,5 +516,37 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
         );
       }
     }
+  }
+
+  void _duplicarAtividade() {
+    // Create a new activity based on current one but without ID
+    final novaAtividade = Atividade(
+      titulo: _atividade.titulo,
+      descricao: _atividade.descricao,
+      categoria: _atividade.categoria,
+      dataHora: DateTime.now().add(const Duration(hours: 1)),
+      duracao: _atividade.duracao,
+      repeticao: _atividade.repeticao,
+      prioridade: _atividade.prioridade,
+      meta: _atividade.meta,
+      notificationTiming: _atividade.notificationTiming,
+      concluida: false,
+    );
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AdicionarAtividadeScreen(atividade: novaAtividade),
+      ),
+    ).then((result) {
+      if (result == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Atividade duplicada com sucesso!'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    });
   }
 }

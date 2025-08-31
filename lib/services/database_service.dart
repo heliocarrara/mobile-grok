@@ -9,7 +9,7 @@ class DatabaseService {
   DatabaseService._internal();
   static Database? _database;
   static const String _databaseName = 'mobile_grok.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2;
 
   // Singleton pattern
   static final DatabaseService _instance = DatabaseService._internal();
@@ -26,6 +26,7 @@ class DatabaseService {
       path,
       version: _databaseVersion,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -43,7 +44,8 @@ class DatabaseService {
         repeticao TEXT NOT NULL DEFAULT 'nenhuma',
         prioridade INTEGER NOT NULL DEFAULT 3,
         meta TEXT,
-        jsonExtra TEXT
+        jsonExtra TEXT,
+        notificationTiming TEXT NOT NULL DEFAULT 'fifteenMinBefore'
       )
     ''');
 
@@ -68,6 +70,15 @@ class DatabaseService {
 
     // Inserir configurações padrão
     await _insertDefaultConfigurations(db);
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add notification timing column
+      await db.execute('''
+        ALTER TABLE atividades ADD COLUMN notificationTiming TEXT NOT NULL DEFAULT 'fifteenMinBefore'
+      ''');
+    }
   }
 
   Future<void> _insertDefaultConfigurations(Database db) async {
@@ -96,6 +107,7 @@ class DatabaseService {
       'prioridade': atividade.prioridade,
       'meta': atividade.meta,
       'jsonExtra': atividade.jsonExtra,
+      'notificationTiming': atividade.notificationTiming.name,
     });
   }
 
@@ -118,6 +130,10 @@ class DatabaseService {
         prioridade: maps[i]['prioridade'],
         meta: maps[i]['meta'],
         jsonExtra: maps[i]['jsonExtra'],
+        notificationTiming: NotificationTiming.values.firstWhere(
+          (e) => e.name == (maps[i]['notificationTiming'] ?? 'fifteenMinBefore'),
+          orElse: () => NotificationTiming.fifteenMinBefore,
+        ),
       ));
   }
 
@@ -147,6 +163,10 @@ class DatabaseService {
       prioridade: maps[0]['prioridade'],
       meta: maps[0]['meta'],
       jsonExtra: maps[0]['jsonExtra'],
+      notificationTiming: NotificationTiming.values.firstWhere(
+        (e) => e.name == (maps[0]['notificationTiming'] ?? 'fifteenMinBefore'),
+        orElse: () => NotificationTiming.fifteenMinBefore,
+      ),
     );
   }
 
@@ -165,6 +185,7 @@ class DatabaseService {
         'prioridade': atividade.prioridade,
         'meta': atividade.meta,
         'jsonExtra': atividade.jsonExtra,
+        'notificationTiming': atividade.notificationTiming.name,
       },
       where: 'id = ?',
       whereArgs: [atividade.id],
@@ -294,6 +315,10 @@ class DatabaseService {
         prioridade: maps[i]['prioridade'],
         meta: maps[i]['meta'],
         jsonExtra: maps[i]['jsonExtra'],
+        notificationTiming: NotificationTiming.values.firstWhere(
+          (e) => e.name == (maps[i]['notificationTiming'] ?? 'fifteenMinBefore'),
+          orElse: () => NotificationTiming.fifteenMinBefore,
+        ),
       ));
   }
 

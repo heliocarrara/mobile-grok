@@ -21,6 +21,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
   String _horaInicioDia = '06:00';
   bool _isLoading = false;
   String? _grokApiKey;
+  String _nomeUsuario = '';
 
   final DatabaseService _databaseService = DatabaseService();
   final GrokApiService _grokApiService = GrokApiService();
@@ -45,6 +46,9 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
           _buildSectionHeader('Notificações'),
           _buildNotificationSettings(),
           const SizedBox(height: 24),
+          _buildSectionHeader('Usuário'),
+          _buildUserSettings(),
+          const SizedBox(height: 24),
           _buildSectionHeader('Aparência'),
           _buildAppearanceSettings(),
           const SizedBox(height: 24),
@@ -62,6 +66,22 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
           fontWeight: FontWeight.w600,
           color: AppTheme.primaryColor,
         ),
+      ),
+    );
+
+  Widget _buildUserSettings() => Card(
+      child: Column(
+        children: [
+          ListTile(
+            title: const Text('Nome do usuário'),
+            subtitle: Text(
+              _nomeUsuario.isEmpty ? 'Não definido' : _nomeUsuario,
+            ),
+            leading: const Icon(Icons.person),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _editarNomeUsuario,
+          ),
+        ],
       ),
     );
 
@@ -189,7 +209,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
 
   Future<void> _loadConfiguracoes() async {
     try {
-      // Prefer secure storage; if a legacy DB entry exists, migrate it then delete DB entry
+      // Load Grok API key
       String? key = await _secureStorage.readGrokApiKey();
       if (key == null) {
         final legacy = await _databaseService.getConfiguracao('grok_api_key');
@@ -200,11 +220,17 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
         }
       }
 
-      if (key != null && mounted) {
+      // Load user name
+      final nomeUsuario = await _databaseService.getConfiguracao('nome_usuario') ?? '';
+
+      if (mounted) {
         setState(() {
           _grokApiKey = key;
+          _nomeUsuario = nomeUsuario;
         });
-        _grokApiService.configure(key);
+        if (key != null) {
+          _grokApiService.configure(key);
+        }
       }
     } catch (e) {
       // ignore load errors silently
@@ -481,6 +507,72 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
         }
       } finally {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _editarNomeUsuario() async {
+    final controller = TextEditingController(text: _nomeUsuario);
+
+    final salvar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nome do Usuário'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Digite seu nome para personalizar a experiência.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: 'Seu nome',
+                border: OutlineInputBorder(),
+              ),
+              textCapitalization: TextCapitalization.words,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+
+    if (salvar ?? false) {
+      final novoNome = controller.text.trim();
+      
+      try {
+        await _databaseService.setConfiguracao('nome_usuario', novoNome);
+        
+        if (mounted) {
+          setState(() {
+            _nomeUsuario = novoNome;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Nome salvo com sucesso!'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao salvar nome: $e'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
       }
     }
   }

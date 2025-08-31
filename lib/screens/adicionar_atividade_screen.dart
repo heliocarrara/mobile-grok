@@ -26,6 +26,8 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
   RepeticaoEnum _repeticaoSelecionada = RepeticaoEnum.nenhuma;
   int _prioridadeSelecionada = 3;
   bool _isLoading = false;
+  Set<int> _diasSemanaSelecionados = <int>{}; // 1=Monday, 7=Sunday
+  NotificationTiming _notificationTiming = NotificationTiming.fifteenMinBefore;
 
   @override
   void initState() {
@@ -48,6 +50,7 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
   _duracao = atividade.duracao;
   _repeticaoSelecionada = atividade.repeticao;
   _prioridadeSelecionada = atividade.prioridade;
+  _notificationTiming = atividade.notificationTiming;
   }
 
   @override
@@ -61,9 +64,9 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
-        title: Text(widget.atividade != null ? 'Editar Atividade' : 'Nova Atividade'),
+        title: Text(widget.atividade != null && widget.atividade!.id != null ? 'Editar Atividade' : 'Nova Atividade'),
         actions: [
-          if (widget.atividade != null)
+          if (widget.atividade != null && widget.atividade!.id != null)
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: _confirmarExclusao,
@@ -88,6 +91,12 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
             _buildPrioridadeField(),
             const SizedBox(height: 16),
             _buildRepeticaoField(),
+            const SizedBox(height: 16),
+            if (_repeticaoSelecionada == RepeticaoEnum.semanal)
+              _buildDiasSemanaSeletor(),
+            if (_repeticaoSelecionada == RepeticaoEnum.semanal)
+              const SizedBox(height: 16),
+            _buildNotificationField(),
             const SizedBox(height: 16),
             _buildMetaField(),
             const SizedBox(height: 32),
@@ -225,6 +234,65 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
       },
     );
 
+  Widget _buildDiasSemanaSeletor() => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Selecione os dias da semana:',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildDiaChip('Seg', 1),
+            _buildDiaChip('Ter', 2),
+            _buildDiaChip('Qua', 3),
+            _buildDiaChip('Qui', 4),
+            _buildDiaChip('Sex', 5),
+            _buildDiaChip('Sáb', 6),
+            _buildDiaChip('Dom', 7),
+          ],
+        ),
+      ],
+    );
+
+  Widget _buildDiaChip(String label, int weekday) => FilterChip(
+      label: Text(label),
+      selected: _diasSemanaSelecionados.contains(weekday),
+      onSelected: (selected) {
+        setState(() {
+          if (selected) {
+            _diasSemanaSelecionados.add(weekday);
+          } else {
+            _diasSemanaSelecionados.remove(weekday);
+          }
+        });
+      },
+      selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+      checkmarkColor: AppTheme.primaryColor,
+    );
+
+  Widget _buildNotificationField() => DropdownButtonFormField<NotificationTiming>(
+      initialValue: _notificationTiming,
+      decoration: const InputDecoration(
+        labelText: 'Notificação',
+        prefixIcon: Icon(Icons.notifications),
+      ),
+      items: NotificationTiming.values.map((timing) => DropdownMenuItem<NotificationTiming>(
+          value: timing,
+          child: Text(timing.displayName),
+        )).toList(),
+      onChanged: (value) {
+        if (value != null) {
+          setState(() {
+            _notificationTiming = value;
+          });
+        }
+      },
+    );
+
   Widget _buildMetaField() => TextFormField(
       controller: _metaController,
       decoration: const InputDecoration(
@@ -252,7 +320,7 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(widget.atividade != null ? 'Atualizar' : 'Salvar'),
+                : Text(widget.atividade != null && widget.atividade!.id != null ? 'Atualizar' : 'Salvar'),
           ),
         ),
       ],
@@ -291,57 +359,70 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
       return;
     }
 
+    // Validate weekday selection for weekly repetition
+    if (_repeticaoSelecionada == RepeticaoEnum.semanal && _diasSemanaSelecionados.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecione pelo menos um dia da semana para repetição semanal'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
       final provider = context.read<AtividadeProvider>();
-      final atividade = Atividade(
-        id: widget.atividade?.id,
-        titulo: _tituloController.text.trim(),
-        descricao: _descricaoController.text.trim().isEmpty 
-            ? null 
-            : _descricaoController.text.trim(),
-        categoria: _categoriaSelecionada,
-        dataHora: _dataHoraSelecionada,
-        duracao: _duracao,
-        repeticao: _repeticaoSelecionada,
-        prioridade: _prioridadeSelecionada,
-        meta: _metaController.text.trim().isEmpty 
-            ? null 
-            : _metaController.text.trim(),
-      );
-
-      bool success;
-      if (widget.atividade != null) {
-        success = await provider.updateAtividade(atividade);
+      
+      if (widget.atividade != null && widget.atividade!.id != null) {
+        // Editing existing activity
+        final atividade = Atividade(
+          id: widget.atividade?.id,
+          titulo: _tituloController.text.trim(),
+          descricao: _descricaoController.text.trim().isEmpty 
+              ? null 
+              : _descricaoController.text.trim(),
+          categoria: _categoriaSelecionada,
+          dataHora: _dataHoraSelecionada,
+          duracao: _duracao,
+          repeticao: _repeticaoSelecionada,
+          prioridade: _prioridadeSelecionada,
+          meta: _metaController.text.trim().isEmpty 
+              ? null 
+              : _metaController.text.trim(),
+          notificationTiming: _notificationTiming,
+        );
+        
+        final success = await provider.updateAtividade(atividade);
+        _handleSaveResult(success, provider, isUpdate: true);
       } else {
-        success = await provider.addAtividade(atividade);
-      }
-
-      if (success) {
-        if (mounted) {
-          Navigator.pop(context, true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                widget.atividade != null 
-                    ? 'Atividade atualizada com sucesso!'
-                    : 'Atividade criada com sucesso!',
-              ),
-              backgroundColor: AppTheme.successColor,
-            ),
+        // Creating new activity(ies)
+        if (_repeticaoSelecionada == RepeticaoEnum.semanal && _diasSemanaSelecionados.isNotEmpty) {
+          // Create multiple activities for selected weekdays
+          await _criarAtividadesSemanais(provider);
+        } else {
+          // Create single activity
+          final atividade = Atividade(
+            titulo: _tituloController.text.trim(),
+            descricao: _descricaoController.text.trim().isEmpty 
+                ? null 
+                : _descricaoController.text.trim(),
+            categoria: _categoriaSelecionada,
+            dataHora: _dataHoraSelecionada,
+            duracao: _duracao,
+            repeticao: _repeticaoSelecionada,
+            prioridade: _prioridadeSelecionada,
+            meta: _metaController.text.trim().isEmpty 
+                ? null 
+                : _metaController.text.trim(),
+            notificationTiming: _notificationTiming,
           );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(provider.error ?? 'Erro ao salvar atividade'),
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
+          
+          final success = await provider.addAtividade(atividade);
+          _handleSaveResult(success, provider);
         }
       }
     } catch (e) {
@@ -358,6 +439,91 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
         setState(() {
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  Future<void> _criarAtividadesSemanais(AtividadeProvider provider) async {
+    int successCount = 0;
+    final baseDate = _dataHoraSelecionada;
+    
+    for (final weekday in _diasSemanaSelecionados) {
+      // Calculate the date for this weekday
+      final targetDate = _getNextWeekdayDate(baseDate, weekday);
+      
+      final atividade = Atividade(
+        titulo: _tituloController.text.trim(),
+        descricao: _descricaoController.text.trim().isEmpty 
+            ? null 
+            : _descricaoController.text.trim(),
+        categoria: _categoriaSelecionada,
+        dataHora: targetDate,
+        duracao: _duracao,
+        repeticao: RepeticaoEnum.semanal,
+        prioridade: _prioridadeSelecionada,
+        meta: _metaController.text.trim().isEmpty 
+            ? null 
+            : _metaController.text.trim(),
+        notificationTiming: _notificationTiming,
+      );
+      
+      final success = await provider.addAtividade(atividade);
+      if (success) successCount++;
+    }
+    
+    if (mounted) {
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$successCount atividade${successCount != 1 ? 's' : ''} criada${successCount != 1 ? 's' : ''} com sucesso!'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+    }
+  }
+
+  DateTime _getNextWeekdayDate(DateTime baseDate, int targetWeekday) {
+    // Convert to ISO weekday (Monday = 1, Sunday = 7)
+    final currentWeekday = baseDate.weekday;
+    int daysToAdd = targetWeekday - currentWeekday;
+    
+    // If the target day is in the past this week, move to next week
+    if (daysToAdd < 0) {
+      daysToAdd += 7;
+    }
+    
+    return DateTime(
+      baseDate.year,
+      baseDate.month,
+      baseDate.day + daysToAdd,
+      baseDate.hour,
+      baseDate.minute,
+    );
+  }
+
+  void _handleSaveResult(bool success, AtividadeProvider provider, {bool isUpdate = false}) {
+    if (success) {
+      if (mounted) {
+        Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isUpdate 
+                  ? 'Atividade atualizada com sucesso!'
+                  : 'Atividade criada com sucesso!',
+            ),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(provider.error ?? 'Erro ao salvar atividade'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
       }
     }
   }

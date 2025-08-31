@@ -12,6 +12,8 @@ class AtividadeCard extends StatefulWidget {
     this.onToggle,
     this.onEdit,
     this.onDelete,
+    this.onDuplicate,
+    this.onShare,
   });
 
   final Atividade atividade;
@@ -19,6 +21,8 @@ class AtividadeCard extends StatefulWidget {
   final VoidCallback? onToggle;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onDuplicate;
+  final VoidCallback? onShare;
 
   @override
   State<AtividadeCard> createState() => _AtividadeCardState();
@@ -68,6 +72,26 @@ class _AtividadeCardState extends State<AtividadeCard>
             endActionPane: ActionPane(
               motion: const ScrollMotion(),
               children: [
+                if (widget.onShare != null)
+                  SlidableAction(
+                    onPressed: (_) => widget.onShare!(),
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                    icon: Icons.nfc,
+                    label: 'NFC',
+                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+                  ),
+                if (widget.onDuplicate != null)
+                  SlidableAction(
+                    onPressed: (_) => widget.onDuplicate!(),
+                    backgroundColor: AppTheme.warningColor,
+                    foregroundColor: Colors.white,
+                    icon: Icons.copy,
+                    label: 'Duplicar',
+                    borderRadius: widget.onShare != null 
+                        ? BorderRadius.zero 
+                        : const BorderRadius.horizontal(left: Radius.circular(20)),
+                  ),
                 if (widget.onEdit != null)
                   SlidableAction(
                     onPressed: (_) => widget.onEdit!(),
@@ -75,7 +99,9 @@ class _AtividadeCardState extends State<AtividadeCard>
                     foregroundColor: Colors.white,
                     icon: Icons.edit,
                     label: 'Editar',
-                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+                    borderRadius: widget.onDelete != null 
+                        ? BorderRadius.zero 
+                        : const BorderRadius.horizontal(right: Radius.circular(20)),
                   ),
                 if (widget.onDelete != null)
                   SlidableAction(
@@ -141,7 +167,9 @@ class _AtividadeCardState extends State<AtividadeCard>
                                     child: _buildDescription(),
                                   ),
                                 const SizedBox(height: 10),
-                                Row(
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 6,
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -150,14 +178,22 @@ class _AtividadeCardState extends State<AtividadeCard>
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(_getCategoriaIcon(widget.atividade.categoria.name), size: 14, color: categoriaColor),
                                           const SizedBox(width: 6),
-                                          Text(widget.atividade.categoria.name.toUpperCase(), style: TextStyle(fontSize: 11, color: categoriaColor, fontWeight: FontWeight.w700)),
+                                          Text(
+                                            widget.atividade.categoria.name.toUpperCase(),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: categoriaColor,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                                       decoration: BoxDecoration(
@@ -165,17 +201,24 @@ class _AtividadeCardState extends State<AtividadeCard>
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(_prioridadeIcon(widget.atividade.prioridade), size: 14, color: _prioridadeColor(widget.atividade.prioridade)),
                                           const SizedBox(width: 6),
-                                          Text(_prioridadeLabel(widget.atividade.prioridade), style: TextStyle(fontSize: 11, color: _prioridadeColor(widget.atividade.prioridade), fontWeight: FontWeight.w700)),
+                                          Text(
+                                            _prioridadeLabel(widget.atividade.prioridade),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: _prioridadeColor(widget.atividade.prioridade),
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ],
                                       ),
                                     ),
-                                    if (widget.atividade.duracao != null) ...[
-                                      const SizedBox(width: 8),
+                                    if (widget.atividade.duracao != null)
                                       _buildDuracaoChip(),
-                                    ],
                                   ],
                                 ),
                               ],
@@ -196,10 +239,19 @@ class _AtividadeCardState extends State<AtividadeCard>
                             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4)],
                           ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: const [
                               Icon(Icons.timer_off, size: 14, color: Colors.white),
                               SizedBox(width: 6),
-                              Text('ATRASADA', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                              Text(
+                                'ATRASADA',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ],
                           ),
                         ),

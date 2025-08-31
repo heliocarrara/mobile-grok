@@ -8,7 +8,7 @@ class GrokApiService {
   GrokApiService._internal();
   static final GrokApiService _instance = GrokApiService._internal();
 
-  static const String _baseUrl = 'https://api.x.ai/v1';
+  static const String _baseUrl = 'https://api.x.ai';
   String? _apiKey;
   bool _isConfigured = false;
 
@@ -119,7 +119,7 @@ class GrokApiService {
   Future<ChatResponse> _processWithGrokApi(String message, AtividadeProvider provider) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/chat/completions'),
+        Uri.parse('$_baseUrl/v1/chat/completions'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_apiKey',
@@ -171,7 +171,7 @@ class GrokApiService {
   Future<bool> validateApiKey(String apiKey) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/chat/completions'),
+        Uri.parse('$_baseUrl/v1/chat/completions'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $apiKey',

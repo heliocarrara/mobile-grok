@@ -59,6 +59,49 @@ enum RepeticaoEnum {
   String get repeticaoDisplayName => displayName;
 }
 
+enum NotificationTiming {
+  none,
+  onTime,
+  fifteenMinBefore,
+  thirtyMinBefore,
+  oneHourBefore,
+  oneDayBefore;
+
+  String get displayName {
+    switch (this) {
+      case NotificationTiming.none:
+        return 'Sem notificação';
+      case NotificationTiming.onTime:
+        return 'No horário';
+      case NotificationTiming.fifteenMinBefore:
+        return '15 minutos antes';
+      case NotificationTiming.thirtyMinBefore:
+        return '30 minutos antes';
+      case NotificationTiming.oneHourBefore:
+        return '1 hora antes';
+      case NotificationTiming.oneDayBefore:
+        return '1 dia antes';
+    }
+  }
+
+  Duration? get duration {
+    switch (this) {
+      case NotificationTiming.none:
+        return null;
+      case NotificationTiming.onTime:
+        return Duration.zero;
+      case NotificationTiming.fifteenMinBefore:
+        return const Duration(minutes: 15);
+      case NotificationTiming.thirtyMinBefore:
+        return const Duration(minutes: 30);
+      case NotificationTiming.oneHourBefore:
+        return const Duration(hours: 1);
+      case NotificationTiming.oneDayBefore:
+        return const Duration(days: 1);
+    }
+  }
+}
+
 @JsonSerializable()
 class Atividade { // para campos dinâmicos
 
@@ -74,6 +117,7 @@ class Atividade { // para campos dinâmicos
     this.prioridade = 3,
     this.meta,
     this.jsonExtra,
+    this.notificationTiming = NotificationTiming.fifteenMinBefore,
   });
 
   factory Atividade.fromJson(Map<String, dynamic> json) => _$AtividadeFromJson(json);
@@ -88,6 +132,7 @@ class Atividade { // para campos dinâmicos
   final int prioridade; // 1-5
   final String? meta;
   final String? jsonExtra;
+  final NotificationTiming notificationTiming;
   Map<String, dynamic> toJson() => _$AtividadeToJson(this);
 
   Atividade copyWith({
@@ -102,6 +147,7 @@ class Atividade { // para campos dinâmicos
     int? prioridade,
     String? meta,
     String? jsonExtra,
+    NotificationTiming? notificationTiming,
   }) => Atividade(
       id: id ?? this.id,
       titulo: titulo ?? this.titulo,
@@ -114,6 +160,7 @@ class Atividade { // para campos dinâmicos
       prioridade: prioridade ?? this.prioridade,
       meta: meta ?? this.meta,
       jsonExtra: jsonExtra ?? this.jsonExtra,
+      notificationTiming: notificationTiming ?? this.notificationTiming,
     );
 
   String get categoriaDisplayName => categoria.displayName;

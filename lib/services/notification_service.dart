@@ -35,33 +35,92 @@ class NotificationService {
   }
 
   Future<void> scheduleAtividadeNotification(Atividade atividade) async {
-    // Agendar notificação 15 minutos antes da atividade
-    final notificationTime = atividade.dataHora.subtract(const Duration(minutes: 15));
+    // Cancel any existing notification for this activity
+    await cancelAtividadeNotification(atividade.id!);
     
-    // Só agendar se a atividade for no futuro
+    // Don't schedule if notification timing is none
+    if (atividade.notificationTiming == NotificationTiming.none) {
+      return;
+    }
+    
+    final notificationDuration = atividade.notificationTiming.duration;
+    if (notificationDuration == null) return;
+    
+    final notificationTime = atividade.dataHora.subtract(notificationDuration);
+    
+    // Only schedule if the notification time is in the future
     if (notificationTime.isAfter(DateTime.now())) {
-      await _notifications.zonedSchedule(
-        atividade.id!,
-        'Lembrete de Atividade',
-        'Sua atividade "${atividade.titulo}" começa em 15 minutos',
-        tz.TZDateTime.from(notificationTime, tz.local),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'atividades_channel',
-            'Atividades',
-            channelDescription: 'Notificações de atividades',
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
+      String message;
+      if (notificationDuration == Duration.zero) {
+        message = 'Sua atividade "${atividade.titulo}" está começando agora!';
+      } else {
+        message = 'Sua atividade "${atividade.titulo}" começa em ${_formatDuration(notificationDuration)}';
+      }
+      
+      try {
+        await _notifications.zonedSchedule(
+          atividade.id!,
+          'Lembrete de Atividade',
+          message,
+          tz.TZDateTime.from(notificationTime, tz.local),
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              'atividades_channel',
+              'Atividades',
+              channelDescription: 'Notificações de atividades',
+              importance: Importance.high,
+              priority: Priority.high,
+              icon: '@mipmap/ic_launcher',
+              enableVibration: true,
+              playSound: true,
+            ),
+            iOS: const DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
           ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+      } catch (e) {
+        // If exact alarms fail, try with inexact scheduling
+        await _notifications.zonedSchedule(
+          atividade.id!,
+          'Lembrete de Atividade',
+          message,
+          tz.TZDateTime.from(notificationTime, tz.local),
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              'atividades_channel',
+              'Atividades',
+              channelDescription: 'Notificações de atividades',
+              importance: Importance.high,
+              priority: Priority.high,
+              icon: '@mipmap/ic_launcher',
+              enableVibration: true,
+              playSound: true,
+            ),
+            iOS: const DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
           ),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      );
+          androidScheduleMode: AndroidScheduleMode.inexact,
+        );
+      }
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    if (duration.inDays > 0) {
+      return '${duration.inDays} dia${duration.inDays > 1 ? 's' : ''}';
+    } else if (duration.inHours > 0) {
+      return '${duration.inHours} hora${duration.inHours > 1 ? 's' : ''}';
+    } else if (duration.inMinutes > 0) {
+      return '${duration.inMinutes} minuto${duration.inMinutes > 1 ? 's' : ''}';
+    } else {
+      return 'agora';
     }
   }
 
