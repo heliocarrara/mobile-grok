@@ -55,9 +55,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                return _messages[index];
-              },
+              itemBuilder: (context, index) => _messages[index],
             ),
           ),
           if (_isLoading)
@@ -244,10 +242,10 @@ class ChatMessage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            CircleAvatar(
+            const CircleAvatar(
               radius: 16,
               backgroundColor: AppTheme.primaryColor,
-              child: const Icon(
+              child: Icon(
                 Icons.smart_toy,
                 color: Colors.white,
                 size: 16,
@@ -292,10 +290,10 @@ class ChatMessage extends StatelessWidget {
           ),
           if (isUser) ...[
             const SizedBox(width: 8),
-            CircleAvatar(
+            const CircleAvatar(
               radius: 16,
               backgroundColor: AppTheme.secondaryColor,
-              child: const Icon(
+              child: Icon(
                 Icons.person,
                 color: Colors.white,
                 size: 16,

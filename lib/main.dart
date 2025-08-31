@@ -11,7 +11,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Inicializar dados de localização para formatação de data
-  await initializeDateFormatting('pt_BR', null);
+  await initializeDateFormatting('pt_BR');
   
   // Inicializar serviço de notificações
   await NotificationService().initialize();
@@ -23,8 +23,7 @@ class MobileGrokApp extends StatelessWidget {
   const MobileGrokApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
+  Widget build(BuildContext context) => MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AtividadeProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -42,5 +41,4 @@ class MobileGrokApp extends StatelessWidget {
         },
       ),
     );
-  }
 }

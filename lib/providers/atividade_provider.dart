@@ -149,7 +149,7 @@ class AtividadeProvider with ChangeNotifier {
 
   void _aplicarFiltros() {
     _atividadesFiltradas = _atividades.where((atividade) {
-      bool passaFiltro = true;
+      var passaFiltro = true;
 
       if (_filtroCategoria != null) {
         passaFiltro = passaFiltro && atividade.categoria == _filtroCategoria;
@@ -191,11 +191,9 @@ class AtividadeProvider with ChangeNotifier {
     final agora = DateTime.now();
     final amanha = agora.add(const Duration(days: 1));
     
-    return _atividades.where((atividade) {
-      return !atividade.concluida && 
+    return _atividades.where((atividade) => !atividade.concluida && 
              atividade.dataHora.isAfter(agora) && 
-             atividade.dataHora.isBefore(amanha);
-    }).toList()
+             atividade.dataHora.isBefore(amanha)).toList()
       ..sort((a, b) => a.dataHora.compareTo(b.dataHora));
   }
 
@@ -203,9 +201,7 @@ class AtividadeProvider with ChangeNotifier {
   List<Atividade> getAtividadesAtrasadas() {
     final agora = DateTime.now();
     
-    return _atividades.where((atividade) {
-      return !atividade.concluida && atividade.dataHora.isBefore(agora);
-    }).toList()
+    return _atividades.where((atividade) => !atividade.concluida && atividade.dataHora.isBefore(agora)).toList()
       ..sort((a, b) => a.dataHora.compareTo(b.dataHora));
   }
 

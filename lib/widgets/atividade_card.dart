@@ -5,12 +5,6 @@ import '../models/atividade.dart';
 import '../utils/theme.dart';
 
 class AtividadeCard extends StatefulWidget {
-  final Atividade atividade;
-  final VoidCallback? onTap;
-  final VoidCallback? onToggle;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-
   const AtividadeCard({
     super.key,
     required this.atividade,
@@ -19,6 +13,12 @@ class AtividadeCard extends StatefulWidget {
     this.onEdit,
     this.onDelete,
   });
+
+  final Atividade atividade;
+  final VoidCallback? onTap;
+  final VoidCallback? onToggle;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
   State<AtividadeCard> createState() => _AtividadeCardState();
@@ -37,10 +37,10 @@ class _AtividadeCardState extends State<AtividadeCard>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
     );
-    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _opacityAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
     _animationController.forward();
@@ -60,297 +60,254 @@ class _AtividadeCardState extends State<AtividadeCard>
 
     return AnimatedBuilder(
       animation: _animationController,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: Opacity(
-            opacity: _opacityAnimation.value,
-            child: Slidable(
-              endActionPane: ActionPane(
-                motion: const ScrollMotion(),
-                children: [
-                  if (widget.onEdit != null)
-                    SlidableAction(
-                      onPressed: (_) => widget.onEdit!(),
-                      backgroundColor: AppTheme.infoColor,
-                      foregroundColor: Colors.white,
-                      icon: Icons.edit,
-                      label: 'Editar',
-                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
-                    ),
-                  if (widget.onDelete != null)
-                    SlidableAction(
-                      onPressed: (_) => widget.onDelete!(),
-                      backgroundColor: AppTheme.errorColor,
-                      foregroundColor: Colors.white,
-                      icon: Icons.delete,
-                      label: 'Excluir',
-                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(20)),
-                    ),
-                ],
-              ),
-              child: Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: widget.onTap,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: widget.atividade.concluida
-                          ? null
-                          : LinearGradient(
-                              colors: [
-                                categoriaColor.withOpacity(0.1),
-                                categoriaColor.withOpacity(0.05),
+      builder: (context, child) => Transform.scale(
+        scale: _scaleAnimation.value,
+        child: Opacity(
+          opacity: _opacityAnimation.value,
+          child: Slidable(
+            endActionPane: ActionPane(
+              motion: const ScrollMotion(),
+              children: [
+                if (widget.onEdit != null)
+                  SlidableAction(
+                    onPressed: (_) => widget.onEdit!(),
+                    backgroundColor: AppTheme.infoColor,
+                    foregroundColor: Colors.white,
+                    icon: Icons.edit,
+                    label: 'Editar',
+                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+                  ),
+                if (widget.onDelete != null)
+                  SlidableAction(
+                    onPressed: (_) => widget.onDelete!(),
+                    backgroundColor: AppTheme.errorColor,
+                    foregroundColor: Colors.white,
+                    icon: Icons.delete,
+                    label: 'Excluir',
+                    borderRadius: const BorderRadius.horizontal(right: Radius.circular(20)),
+                  ),
+              ],
+            ),
+            child: Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: InkWell(
+                onTap: widget.onTap,
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: widget.atividade.concluida
+                            ? null
+                            : LinearGradient(
+                                colors: [
+                                  categoriaColor.withOpacity(0.08),
+                                  categoriaColor.withOpacity(0.03),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                        border: Border.all(
+                          color: widget.atividade.concluida
+                              ? (isDark ? Colors.grey.shade700 : Colors.grey.shade300)
+                              : isAtrasada
+                                  ? AppTheme.warningColor.withOpacity(0.5)
+                                  : categoriaColor.withOpacity(0.28),
+                          width: widget.atividade.concluida ? 1 : 2,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildCheckbox(categoriaColor),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: _buildTitle()),
+                                    const SizedBox(width: 8),
+                                    _buildTimeInfo(),
+                                  ],
+                                ),
+                                if (widget.atividade.descricao != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: _buildDescription(),
+                                  ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: categoriaColor.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(_getCategoriaIcon(widget.atividade.categoria.name), size: 14, color: categoriaColor),
+                                          const SizedBox(width: 6),
+                                          Text(widget.atividade.categoria.name.toUpperCase(), style: TextStyle(fontSize: 11, color: categoriaColor, fontWeight: FontWeight.w700)),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.textSecondaryColor.withOpacity(0.08),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(_prioridadeIcon(widget.atividade.prioridade), size: 14, color: _prioridadeColor(widget.atividade.prioridade)),
+                                          const SizedBox(width: 6),
+                                          Text(_prioridadeLabel(widget.atividade.prioridade), style: TextStyle(fontSize: 11, color: _prioridadeColor(widget.atividade.prioridade), fontWeight: FontWeight.w700)),
+                                        ],
+                                      ),
+                                    ),
+                                    if (widget.atividade.duracao != null) ...[
+                                      const SizedBox(width: 8),
+                                      _buildDuracaoChip(),
+                                    ],
+                                  ],
+                                ),
                               ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
                             ),
-                      border: Border.all(
-                        color: widget.atividade.concluida
-                            ? (isDark ? Colors.grey.shade700 : Colors.grey.shade300)
-                            : isAtrasada
-                                ? AppTheme.warningColor.withOpacity(0.5)
-                                : categoriaColor.withOpacity(0.3),
-                        width: widget.atividade.concluida ? 1 : 2,
+                          ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildCheckbox(categoriaColor),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildTitle(),
-                              if (widget.atividade.descricao != null) _buildDescription(),
-                              const SizedBox(height: 12),
-                              _buildDetails(categoriaColor),
+                    if (isAtrasada && !widget.atividade.concluida)
+                      Positioned(
+                        right: 12,
+                        top: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.errorColor,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4)],
+                          ),
+                          child: Row(
+                            children: const [
+                              Icon(Icons.timer_off, size: 14, color: Colors.white),
+                              SizedBox(width: 6),
+                              Text('ATRASADA', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        _buildTimeInfo(),
-                      ],
-                    ),
-                  ),
+                      ),
+                  ],
                 ),
               ),
             ),
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCheckbox(Color categoriaColor) {
-    return GestureDetector(
-      onTap: widget.onToggle,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: widget.atividade.concluida
-              ? AppTheme.successGradient
-              : LinearGradient(
-                  colors: [
-                    categoriaColor.withOpacity(0.2),
-                    categoriaColor.withOpacity(0.1),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          border: Border.all(
-            color: widget.atividade.concluida
-                ? AppTheme.successColor
-                : categoriaColor.withOpacity(0.5),
-            width: 2,
-          ),
         ),
-        child: widget.atividade.concluida
-            ? const Icon(
-                Icons.check,
-                color: Colors.white,
-                size: 16,
-              )
-            : null,
       ),
     );
   }
 
-  Widget _buildTitle() {
-    return Text(
-      widget.atividade.titulo,
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: widget.atividade.concluida
-            ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)
-            : Theme.of(context).textTheme.bodyLarge?.color,
-        decoration: widget.atividade.concluida ? TextDecoration.lineThrough : null,
-        decorationThickness: 2,
-      ),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
+  Widget _buildCheckbox(Color categoriaColor) => GestureDetector(
+        onTap: widget.onToggle,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: widget.atividade.concluida
+                ? AppTheme.successGradient
+                : LinearGradient(
+                    colors: [
+                      categoriaColor.withOpacity(0.2),
+                      categoriaColor.withOpacity(0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+            border: Border.all(
+              color: widget.atividade.concluida
+                  ? AppTheme.successColor
+                  : categoriaColor.withOpacity(0.5),
+              width: 2,
+            ),
+          ),
+          child: widget.atividade.concluida
+              ? const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 16,
+                )
+              : null,
+        ),
+      );
 
-  Widget _buildDescription() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Text(
-        widget.atividade.descricao!,
+  Widget _buildTitle() => Text(
+        widget.atividade.titulo,
         style: TextStyle(
-          fontSize: 14,
-          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: widget.atividade.concluida
+              ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)
+              : Theme.of(context).textTheme.bodyLarge?.color,
           decoration: widget.atividade.concluida ? TextDecoration.lineThrough : null,
+          decorationThickness: 2,
         ),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
+      );
 
-  Widget _buildDetails(Color categoriaColor) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: [
-        _buildCategoriaChip(categoriaColor),
-        _buildPrioridadeChip(),
-        if (widget.atividade.duracao != null)
-          _buildDuracaoChip(),
-      ],
-    );
-  }
-
-  Widget _buildCategoriaChip(Color categoriaColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: categoriaColor.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: categoriaColor.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            _getCategoriaIcon(widget.atividade.categoria.name),
-            size: 12,
-            color: categoriaColor,
+  Widget _buildDescription() => Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(
+          widget.atividade.descricao!,
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+            decoration: widget.atividade.concluida ? TextDecoration.lineThrough : null,
           ),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              widget.atividade.categoria.name.toUpperCase(),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+
+  Widget _buildDuracaoChip() => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppTheme.textSecondaryColor.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.textSecondaryColor.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.access_time,
+              size: 10,
+              color: AppTheme.textSecondaryColor,
+            ),
+            const SizedBox(width: 2),
+            Text(
+              '${widget.atividade.duracao}m',
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w600,
-                color: categoriaColor,
-                letterSpacing: 0.5,
+                color: AppTheme.textSecondaryColor,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPrioridadeChip() {
-    final prioridade = widget.atividade.prioridade;
-    Color color;
-    String label;
-
-    switch (prioridade) {
-      case 1:
-        color = AppTheme.successColor;
-        label = 'Baixa';
-        break;
-      case 2:
-        color = AppTheme.infoColor;
-        label = 'Média';
-        break;
-      case 3:
-        color = AppTheme.warningColor;
-        label = 'Alta';
-        break;
-      case 4:
-        color = AppTheme.errorColor;
-        label = 'Urgente';
-        break;
-      case 5:
-        color = AppTheme.errorColor;
-        label = 'Crítica';
-        break;
-      default:
-        color = AppTheme.textSecondaryColor;
-        label = 'Normal';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
+          ],
         ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDuracaoChip() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppTheme.textSecondaryColor.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.textSecondaryColor.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.access_time,
-            size: 10,
-            color: AppTheme.textSecondaryColor,
-          ),
-          const SizedBox(width: 2),
-          Text(
-            '${widget.atividade.duracao}m',
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textSecondaryColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+      );
 
   Widget _buildTimeInfo() {
     final now = DateTime.now();
@@ -387,7 +344,6 @@ class _AtividadeCardState extends State<AtividadeCard>
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: timeColor.withOpacity(0.3),
-              width: 1,
             ),
           ),
           child: Text(
@@ -404,7 +360,7 @@ class _AtividadeCardState extends State<AtividadeCard>
           const SizedBox(height: 4),
           Text(
             _getTimeAgo(widget.atividade.dataHora),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 9,
               color: AppTheme.textLightColor,
             ),
@@ -450,6 +406,56 @@ class _AtividadeCardState extends State<AtividadeCard>
       return 'em ${difference.inMinutes} min';
     } else {
       return 'agora';
+    }
+  }
+
+  IconData _prioridadeIcon(int prioridade) {
+    switch (prioridade) {
+      case 1:
+        return Icons.keyboard_arrow_down;
+      case 2:
+        return Icons.low_priority;
+      case 3:
+        return Icons.flag;
+      case 4:
+        return Icons.priority_high;
+      case 5:
+        return Icons.warning;
+      default:
+        return Icons.flag;
+    }
+  }
+
+  Color _prioridadeColor(int prioridade) {
+    switch (prioridade) {
+      case 1:
+        return AppTheme.successColor;
+      case 2:
+        return AppTheme.infoColor;
+      case 3:
+        return AppTheme.warningColor;
+      case 4:
+      case 5:
+        return AppTheme.errorColor;
+      default:
+        return AppTheme.textSecondaryColor;
+    }
+  }
+
+  String _prioridadeLabel(int prioridade) {
+    switch (prioridade) {
+      case 1:
+        return 'Baixa';
+      case 2:
+        return 'Média';
+      case 3:
+        return 'Alta';
+      case 4:
+        return 'Urgente';
+      case 5:
+        return 'Crítica';
+      default:
+        return 'Normal';
     }
   }
 }

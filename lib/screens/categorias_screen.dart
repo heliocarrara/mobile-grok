@@ -5,8 +5,7 @@ class CategoriasScreen extends StatelessWidget {
   const CategoriasScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: const Text('Categorias'),
       ),
@@ -72,7 +71,6 @@ class CategoriasScreen extends StatelessWidget {
         ],
       ),
     );
-  }
 
   Widget _buildCategoriaCard(
     BuildContext context,
@@ -80,8 +78,7 @@ class CategoriasScreen extends StatelessWidget {
     IconData icone,
     Color cor,
     String descricao,
-  ) {
-    return Card(
+  ) => Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: Container(
@@ -127,7 +124,6 @@ class CategoriasScreen extends StatelessWidget {
         },
       ),
     );
-  }
 
 
 }

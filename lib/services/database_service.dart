@@ -1,19 +1,18 @@
-import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/atividade.dart';
 import '../models/categoria.dart';
-import '../models/configuracao.dart';
+// ...existing code...
 
 class DatabaseService {
+  factory DatabaseService() => _instance;
+  DatabaseService._internal();
   static Database? _database;
   static const String _databaseName = 'mobile_grok.db';
   static const int _databaseVersion = 1;
 
   // Singleton pattern
   static final DatabaseService _instance = DatabaseService._internal();
-  factory DatabaseService() => _instance;
-  DatabaseService._internal();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -22,8 +21,8 @@ class DatabaseService {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), _databaseName);
-    return await openDatabase(
+    var path = join(await getDatabasesPath(), _databaseName);
+    return openDatabase(
       path,
       version: _databaseVersion,
       onCreate: _onCreate,
@@ -78,7 +77,7 @@ class DatabaseService {
       {'chave': 'tema_escuro', 'valor': 'false'},
     ];
 
-    for (var config in defaultConfigs) {
+    for (final config in defaultConfigs) {
       await db.insert('configuracoes', config);
     }
   }
@@ -86,7 +85,7 @@ class DatabaseService {
   // CRUD Atividades
   Future<int> insertAtividade(Atividade atividade) async {
     final db = await database;
-    return await db.insert('atividades', {
+    return db.insert('atividades', {
       'titulo': atividade.titulo,
       'descricao': atividade.descricao,
       'categoria': atividade.categoria.name,
@@ -103,8 +102,7 @@ class DatabaseService {
   Future<List<Atividade>> getAllAtividades() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('atividades');
-    return List.generate(maps.length, (i) {
-      return Atividade(
+    return List.generate(maps.length, (i) => Atividade(
         id: maps[i]['id'],
         titulo: maps[i]['titulo'],
         descricao: maps[i]['descricao'],
@@ -120,8 +118,7 @@ class DatabaseService {
         prioridade: maps[i]['prioridade'],
         meta: maps[i]['meta'],
         jsonExtra: maps[i]['jsonExtra'],
-      );
-    });
+      ));
   }
 
   Future<Atividade?> getAtividadeById(int id) async {
@@ -155,7 +152,7 @@ class DatabaseService {
 
   Future<int> updateAtividade(Atividade atividade) async {
     final db = await database;
-    return await db.update(
+    return db.update(
       'atividades',
       {
         'titulo': atividade.titulo,
@@ -176,7 +173,7 @@ class DatabaseService {
 
   Future<int> deleteAtividade(int id) async {
     final db = await database;
-    return await db.delete(
+    return db.delete(
       'atividades',
       where: 'id = ?',
       whereArgs: [id],
@@ -185,7 +182,7 @@ class DatabaseService {
 
   Future<int> toggleAtividadeConcluida(int id, bool concluida) async {
     final db = await database;
-    return await db.update(
+    return db.update(
       'atividades',
       {'concluida': concluida ? 1 : 0},
       where: 'id = ?',
@@ -196,7 +193,7 @@ class DatabaseService {
   // CRUD Categorias
   Future<int> insertCategoria(Categoria categoria) async {
     final db = await database;
-    return await db.insert('categorias', {
+    return db.insert('categorias', {
       'nome': categoria.nome,
       'cor': categoria.cor,
       'icone': categoria.icone,
@@ -206,19 +203,17 @@ class DatabaseService {
   Future<List<Categoria>> getAllCategorias() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('categorias');
-    return List.generate(maps.length, (i) {
-      return Categoria(
+    return List.generate(maps.length, (i) => Categoria(
         id: maps[i]['id'],
         nome: maps[i]['nome'],
         cor: maps[i]['cor'],
         icone: maps[i]['icone'],
-      );
-    });
+      ));
   }
 
   Future<int> updateCategoria(Categoria categoria) async {
     final db = await database;
-    return await db.update(
+    return db.update(
       'categorias',
       {
         'nome': categoria.nome,
@@ -232,7 +227,7 @@ class DatabaseService {
 
   Future<int> deleteCategoria(int id) async {
     final db = await database;
-    return await db.delete(
+    return db.delete(
       'categorias',
       where: 'id = ?',
       whereArgs: [id],
@@ -254,10 +249,19 @@ class DatabaseService {
 
   Future<int> setConfiguracao(String chave, String valor) async {
     final db = await database;
-    return await db.insert(
+    return db.insert(
       'configuracoes',
       {'chave': chave, 'valor': valor},
       conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<int> deleteConfiguracao(String chave) async {
+    final db = await database;
+    return db.delete(
+      'configuracoes',
+      where: 'chave = ?',
+      whereArgs: [chave],
     );
   }
 
@@ -274,8 +278,7 @@ class DatabaseService {
       orderBy: 'dataHora ASC',
     );
 
-    return List.generate(maps.length, (i) {
-      return Atividade(
+    return List.generate(maps.length, (i) => Atividade(
         id: maps[i]['id'],
         titulo: maps[i]['titulo'],
         descricao: maps[i]['descricao'],
@@ -291,8 +294,7 @@ class DatabaseService {
         prioridade: maps[i]['prioridade'],
         meta: maps[i]['meta'],
         jsonExtra: maps[i]['jsonExtra'],
-      );
-    });
+      ));
   }
 
   Future<double> getProgressoDiario(DateTime date) async {
@@ -308,7 +310,7 @@ class DatabaseService {
   // Atualizar data/hora da atividade
   Future<int> updateAtividadeDataHora(int id, DateTime novaDataHora) async {
     final db = await database;
-    return await db.update(
+    return db.update(
       'atividades',
       {'dataHora': novaDataHora.toIso8601String()},
       where: 'id = ?',

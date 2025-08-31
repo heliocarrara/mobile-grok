@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
 import '../providers/atividade_provider.dart';
 import '../models/atividade.dart';
 import '../utils/theme.dart';
@@ -24,7 +25,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin {
   DateTime _selectedDate = DateTime.now();
-  double _progressoDiario = 0.0;
+  double _progressoDiario = 0;
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
@@ -42,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       vsync: this,
     );
     
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
     _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
@@ -50,8 +51,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // iniciar tarefas assíncronas após o primeiro frame
+      // ignora warning de futures não aguardadas aqui, pois rodamos pós-frame
+      // ignore: unawaited_futures
       _loadData();
+      // ignore: unawaited_futures
       _fadeController.forward();
+      // ignore: unawaited_futures
       _slideController.forward();
     });
   }
@@ -66,7 +72,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Future<void> _loadData() async {
     final provider = context.read<AtividadeProvider>();
     await provider.loadAtividadesByDate(_selectedDate);
-    _updateProgresso();
+  await _updateProgresso();
   }
 
   Future<void> _updateProgresso() async {
@@ -78,8 +84,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       body: Consumer<AtividadeProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
@@ -145,10 +150,12 @@ class _DashboardScreenState extends State<DashboardScreen>
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton.extended(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ChatbotScreen()),
-            ),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatbotScreen()),
+              );
+            },
             icon: const Icon(Icons.smart_toy),
             label: const Text('IA'),
             backgroundColor: AppTheme.secondaryColor,
@@ -157,30 +164,106 @@ class _DashboardScreenState extends State<DashboardScreen>
           const SizedBox(height: 16),
           FloatingActionButton(
             onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AdicionarAtividadeScreen()),
+              await showModalBottomSheet(
+                context: context,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                builder: (context) => Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.add_circle_outline),
+                        title: const Text('Criar tarefa rápida'),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AdicionarAtividadeScreen()),
+                          );
+                          if (result == true) {
+                            await _loadData();
+                          }
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.smart_toy),
+                        title: const Text('Criar com IA'),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ChatbotScreen()),
+                          );
+                          if (result == true) {
+                            await _loadData();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               );
-              if (result == true) {
-                _loadData();
-              }
             },
-            child: const Icon(Icons.add),
             elevation: 8,
+            child: const Icon(Icons.add),
           ),
         ],
       ),
     );
-  }
 
-  Widget _buildSliverAppBar() {
-    return SliverAppBar(
+  Widget _buildSliverAppBar() => SliverAppBar(
       expandedHeight: 140,
       floating: false,
       pinned: true,
+      centerTitle: false,
       backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        title: GestureDetector(
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: _selectedDate,
+              firstDate: DateTime.now().subtract(const Duration(days: 365)),
+              lastDate: DateTime.now().add(const Duration(days: 365)),
+            );
+            if (date != null) {
+              setState(() {
+                _selectedDate = date;
+              });
+              // atualizar dados sem bloquear o callback do date picker
+              // ignore: unawaited_futures
+              _loadData();
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    DateFormat('EEEE, d MMMM', 'pt_BR').format(_selectedDate),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         background: Container(
           decoration: BoxDecoration(
             gradient: AppTheme.primaryGradient,
@@ -215,17 +298,21 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ),
                       ),
                       IconButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const CategoriasScreen()),
-                        ),
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const CategoriasScreen()),
+                          );
+                        },
                         icon: const Icon(Icons.category, color: Colors.white),
                       ),
                       IconButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ConfiguracoesScreen()),
-                        ),
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ConfiguracoesScreen()),
+                          );
+                        },
                         icon: const Icon(Icons.settings, color: Colors.white),
                       ),
                     ],
@@ -236,150 +323,243 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ),
       ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              DateFormat('EEEE, d MMMM', 'pt_BR').format(_selectedDate),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          IconButton(
-            onPressed: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: _selectedDate,
-                firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                lastDate: DateTime.now().add(const Duration(days: 365)),
-              );
-              if (date != null) {
-                setState(() {
-                  _selectedDate = date;
-                });
-                _loadData();
-              }
-            },
-            icon: const Icon(Icons.calendar_today),
-          ),
-        ],
-      ),
     );
-  }
 
-  Widget _buildProgressSection() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.surface,
-            Theme.of(context).colorScheme.surface.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.trending_up,
-                color: AppTheme.primaryColor,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Progresso Diário',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+  Widget _buildProgressSection() => Consumer<AtividadeProvider>(
+      builder: (context, provider, child) {
+        final proximas = provider.getAtividadesProximas();
+        final atrasadas = provider.getAtividadesAtrasadas();
+        final concluidasHoje = provider.atividades.where((a) {
+          final now = DateTime.now();
+          return a.concluida && a.dataHora.day == now.day && a.dataHora.month == now.month && a.dataHora.year == now.year;
+        }).length;
+
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).colorScheme.surface,
+                Theme.of(context).colorScheme.surface.withOpacity(0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          CustomProgressIndicator(
-            progress: _progressoDiario,
-            label: 'Atividades Concluídas',
-            height: 16,
-          ),
-        ],
-      ),
-    );
-  }
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // compute a flexible size for the radial indicator so the row
+              // doesn't overflow on very narrow widths (e.g. small windows)
+              final available = constraints.maxWidth;
+              final radialWidth = min(96.0, max(48.0, available * 0.35));
 
-  Widget _buildFilters(AtividadeProvider provider) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Radial progress (responsive)
+                  SizedBox(
+                    width: radialWidth,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.trending_up,
+                          color: AppTheme.primaryColor,
+                          size: 22,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Progresso Diário',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        RadialProgressIndicator(
+                          progress: _progressoDiario,
+                          size: radialWidth,
+                          centerLabel: 'Concl.',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  // Summary cards
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatCard(
+                                title: 'Próxima',
+                                value: proximas.isNotEmpty ? DateFormat('HH:mm - d MMM').format(proximas.first.dataHora) : '—',
+                                icon: Icons.schedule,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildStatCard(
+                                title: 'Atrasadas',
+                                value: atrasadas.length.toString(),
+                                icon: Icons.error_outline,
+                                color: AppTheme.errorColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildStatCard(
+                          title: 'Concluídas hoje',
+                          value: concluidasHoje.toString(),
+                          icon: Icons.check_circle,
+                          color: AppTheme.successColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+
+  Widget _buildStatCard({required String title, required String value, required IconData icon, Color? color}) => Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
       child: Row(
         children: [
-          Expanded(
-            child: DropdownButtonFormField<CategoriaEnum>(
-              value: provider.filtroCategoria,
-              decoration: const InputDecoration(
-                labelText: 'Categoria',
-                prefixIcon: Icon(Icons.filter_list),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              items: [
-                const DropdownMenuItem(
-                  value: null,
-                  child: Text('Todas'),
-                ),
-                ...CategoriaEnum.values.map((categoria) => DropdownMenuItem(
-                  value: categoria,
-                  child: Text(
-                    categoria.displayName,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                )),
-              ],
-              onChanged: (value) {
-                provider.setFiltroCategoria(value);
-              },
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: (color ?? AppTheme.primaryColor).withOpacity(0.12),
             ),
+            child: Icon(icon, color: color ?? AppTheme.primaryColor, size: 18),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: DropdownButtonFormField<int>(
-              value: provider.filtroPrioridade,
-              decoration: const InputDecoration(
-                labelText: 'Prioridade',
-                prefixIcon: Icon(Icons.priority_high),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              items: [
-                const DropdownMenuItem(
-                  value: null,
-                  child: Text('Todas'),
-                ),
-                ...List.generate(5, (index) => DropdownMenuItem(
-                  value: index + 1,
-                  child: Text('${index + 1}'),
-                )),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.labelMedium),
+                const SizedBox(height: 4),
+                Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
               ],
-              onChanged: (value) {
-                provider.setFiltroPrioridade(value);
-              },
             ),
           ),
         ],
       ),
     );
+
+  Widget _buildFilters(AtividadeProvider provider) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            // Category quick menu
+            PopupMenuButton<CategoriaEnum?>(
+              tooltip: 'Categoria',
+              onSelected: (value) => provider.setFiltroCategoria(value),
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: null, child: Text('Todas')),
+                ...CategoriaEnum.values.map((c) => PopupMenuItem(value: c, child: Row(children: [Icon(_categoriaIcon(c)), const SizedBox(width:8), Text(c.displayName)]))),
+              ],
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.folder),
+                    const SizedBox(width: 8),
+                    Text(provider.filtroCategoria?.displayName ?? 'Categoria', overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+            ),
+
+            // Priority quick menu
+            PopupMenuButton<int?>(
+              tooltip: 'Prioridade',
+              onSelected: (value) => provider.setFiltroPrioridade(value),
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: null, child: Text('Todas')),
+                ...List.generate(5, (i) => PopupMenuItem(value: i+1, child: Row(children: [Icon(_prioridadeIcon(i+1)), const SizedBox(width:8), Text('Nível ${i+1}')]))),
+              ],
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.flag),
+                    const SizedBox(width: 8),
+                    Text(provider.filtroPrioridade?.toString() ?? 'Prioridade', overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+            ),
+
+            // Clear filters
+            TextButton.icon(
+              onPressed: provider.limparFiltros,
+              icon: const Icon(Icons.clear_all),
+              label: const Text('Limpar'),
+            ),
+          ],
+        ),
+      );
+
+  IconData _prioridadeIcon(int nivel) {
+    switch (nivel) {
+      case 1: return Icons.low_priority;
+      case 2: return Icons.flag_outlined;
+      case 3: return Icons.outbound;
+      case 4: return Icons.priority_high;
+      case 5: return Icons.warning_amber;
+      default: return Icons.flag;
+    }
+  }
+
+  IconData _categoriaIcon(CategoriaEnum c) {
+    switch (c) {
+      case CategoriaEnum.faculdade: return Icons.school;
+      case CategoriaEnum.casa: return Icons.home;
+      case CategoriaEnum.lazer: return Icons.sports_esports;
+      case CategoriaEnum.alimentacao: return Icons.restaurant;
+      case CategoriaEnum.financas: return Icons.account_balance_wallet;
+      case CategoriaEnum.trabalho: return Icons.work;
+      case CategoriaEnum.saude: return Icons.health_and_safety;
+      case CategoriaEnum.outros: return Icons.more_horiz;
+    }
   }
 
   Widget _buildAtividadesList(AtividadeProvider provider) {
@@ -471,8 +651,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon, Color color) {
-    return Row(
+  Widget _buildSectionHeader(String title, IconData icon, Color color) => Row(
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 8),
@@ -485,7 +664,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
       ],
     );
-  }
 
   void _openDetalhesAtividade(Atividade atividade) {
     Navigator.push(
@@ -493,12 +671,12 @@ class _DashboardScreenState extends State<DashboardScreen>
       MaterialPageRoute(
         builder: (context) => DetalhesAtividadeScreen(atividade: atividade),
       ),
-    ).then((_) => _loadData());
+  ).then((_) async => await _loadData());
   }
 
   Future<void> _toggleAtividade(Atividade atividade) async {
     await context.read<AtividadeProvider>().toggleAtividade(atividade);
-    _updateProgresso();
+  await _updateProgresso();
   }
 
   void _editAtividade(Atividade atividade) {
@@ -507,7 +685,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       MaterialPageRoute(
         builder: (context) => AdicionarAtividadeScreen(atividade: atividade),
       ),
-    ).then((_) => _loadData());
+  ).then((_) async => await _loadData());
   }
 
   void _deleteAtividade(Atividade atividade) {
@@ -522,9 +700,10 @@ class _DashboardScreenState extends State<DashboardScreen>
              child: const Text(AppConstants.cancelButton),
            ),
            ElevatedButton(
-             onPressed: () {
-               context.read<AtividadeProvider>().deleteAtividade(atividade.id!);
+             onPressed: () async {
+               await context.read<AtividadeProvider>().deleteAtividade(atividade.id!);
                Navigator.pop(context);
+               await _loadData();
              },
              style: ElevatedButton.styleFrom(
                backgroundColor: AppTheme.errorColor,

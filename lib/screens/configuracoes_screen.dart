@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import '../utils/theme.dart';
+import '../services/database_service.dart';
+import '../services/grok_api_service.dart';
+import '../services/secure_storage_service.dart';
 import '../services/backup_service.dart';
-import '../services/notification_service.dart';
+// ...existing code...
 import '../providers/theme_provider.dart';
 
 class ConfiguracoesScreen extends StatefulWidget {
@@ -17,9 +20,19 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
   bool _notificacoesAtivas = true;
   String _horaInicioDia = '06:00';
   bool _isLoading = false;
+  String? _grokApiKey;
+
+  final DatabaseService _databaseService = DatabaseService();
+  final GrokApiService _grokApiService = GrokApiService();
+  final SecureStorageService _secureStorage = SecureStorageService();
   
   final BackupService _backupService = BackupService();
-  final NotificationService _notificationService = NotificationService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfiguracoes();
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -73,7 +86,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
             const Divider(),
             ListTile(
               title: const Text('Hora de início do dia'),
-              subtitle: Text('$_horaInicioDia'),
+              subtitle: Text(_horaInicioDia),
               leading: const Icon(Icons.access_time),
               trailing: const Icon(Icons.chevron_right),
               onTap: _selecionarHoraInicio,
@@ -84,8 +97,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
     );
 
   Widget _buildAppearanceSettings() => Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return Card(
+      builder: (context, themeProvider, child) => Card(
           child: Column(
             children: [
               SwitchListTile(
@@ -106,35 +118,55 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
               ),
             ],
           ),
-        );
-      },
+        ),
     );
 
   Widget _buildDataSettings() => Card(
       child: Column(
         children: [
           ListTile(
+            title: const Text('Chave da API (Grok)'),
+            subtitle: Text(
+              _grokApiKey == null || _grokApiKey!.isEmpty
+                  ? 'Não configurada'
+                  : ('••••${_grokApiKey!.length > 4 ? _grokApiKey!.substring(_grokApiKey!.length - 4) : _grokApiKey!}'),
+            ),
+            leading: const Icon(Icons.vpn_key),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: _grokApiKey == null || _grokApiKey!.isEmpty ? null : _removerGrokApiKey,
+                  child: const Text('Remover'),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+            onTap: _editarGrokApiKey,
+          ),
+          const Divider(),
+          ListTile(
             title: const Text('Exportar dados'),
             subtitle: const Text('Salvar backup das atividades'),
             leading: const Icon(Icons.download),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _exportarDados,
+            trailing: _isLoading ? const SizedBox(width:24,height:24,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.chevron_right),
+            onTap: _isLoading ? null : _exportarDados,
           ),
           const Divider(),
           ListTile(
             title: const Text('Importar dados'),
             subtitle: const Text('Restaurar backup'),
             leading: const Icon(Icons.upload),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _importarDados,
+            trailing: _isLoading ? const SizedBox(width:24,height:24,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.chevron_right),
+            onTap: _isLoading ? null : _importarDados,
           ),
           const Divider(),
           ListTile(
             title: const Text('Limpar dados'),
             subtitle: const Text('Excluir todas as atividades'),
             leading: const Icon(Icons.delete_forever, color: AppTheme.errorColor),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _confirmarLimpeza,
+            trailing: _isLoading ? const SizedBox(width:24,height:24,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.chevron_right),
+            onTap: _isLoading ? null : _confirmarLimpeza,
           ),
         ],
       ),
@@ -152,6 +184,136 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
       setState(() {
         _horaInicioDia = '${hora.hour.toString().padLeft(2, '0')}:${hora.minute.toString().padLeft(2, '0')}';
       });
+    }
+  }
+
+  Future<void> _loadConfiguracoes() async {
+    try {
+      // Prefer secure storage; if a legacy DB entry exists, migrate it then delete DB entry
+      String? key = await _secureStorage.readGrokApiKey();
+      if (key == null) {
+        final legacy = await _databaseService.getConfiguracao('grok_api_key');
+        if (legacy != null && legacy.isNotEmpty) {
+          await _secureStorage.saveGrokApiKey(legacy);
+          await _databaseService.deleteConfiguracao('grok_api_key');
+          key = legacy;
+        }
+      }
+
+      if (key != null && mounted) {
+        setState(() {
+          _grokApiKey = key;
+        });
+        _grokApiService.configure(key);
+      }
+    } catch (e) {
+      // ignore load errors silently
+    }
+  }
+
+  Future<void> _editarGrokApiKey() async {
+  final controller = TextEditingController(text: _grokApiKey ?? '');
+
+    final salvar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Configurar Grok API'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Insira sua chave da API do Grok.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              obscureText: true,
+              decoration: const InputDecoration(
+                hintText: 'sk-...'
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+
+    if (salvar ?? false) {
+      final newKey = controller.text.trim();
+
+      // Simple validation
+      if (newKey.isEmpty || newKey.length < 10) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Chave inválida. Insira ao menos 10 caracteres.')),
+          );
+        }
+        return;
+      }
+
+      try {
+  // Save securely
+  await _secureStorage.saveGrokApiKey(newKey);
+  _grokApiService.configure(newKey);
+        if (mounted) {
+          setState(() {
+            _grokApiKey = newKey;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Chave da API salva com sucesso!')),
+          );
+        }
+
+        // Validate key in background and inform user
+        final isValid = await _grokApiService.validateApiKey(newKey);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(isValid ? 'Chave validada com sucesso.' : 'A chave parece inválida (ou API inacessível).')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao salvar chave: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _removerGrokApiKey() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remover chave da API'),
+        content: const Text('Deseja realmente remover a chave da API do Grok?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Remover')),
+        ],
+      ),
+    );
+
+    if (confirm ?? false) {
+      try {
+        await _secureStorage.deleteGrokApiKey();
+        // Optionally remove from DB as well
+        await _databaseService.setConfiguracao('grok_api_key', '');
+        _grokApiService.configure('');
+        if (mounted) {
+          setState(() => _grokApiKey = null);
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chave removida')));
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao remover chave: $e')));
+        }
+      }
     }
   }
 
@@ -189,11 +351,10 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
-        allowMultiple: false,
       );
 
         if (result != null && result.files.isNotEmpty) {
-        final String? filePath = result.files.first.path;
+        final filePath = result.files.first.path;
         if (filePath == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -243,7 +404,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
           ),
         );
 
-        if (confirmacao == true) {
+        if (confirmacao ?? false) {
           setState(() => _isLoading = true);
 
           await _backupService.importData(filePath);
@@ -295,7 +456,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
       ),
     );
 
-    if (confirmacao == true) {
+    if (confirmacao ?? false) {
       setState(() => _isLoading = true);
       
       try {

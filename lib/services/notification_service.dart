@@ -4,9 +4,9 @@ import 'package:timezone/data/latest.dart' as tz;
 import '../models/atividade.dart';
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
+  static final NotificationService _instance = NotificationService._internal();
 
   final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
 
@@ -15,9 +15,7 @@ class NotificationService {
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
       requestBadgePermission: true,
-      requestSoundPermission: true,
     );
 
     const initSettings = InitializationSettings(
@@ -77,8 +75,6 @@ class NotificationService {
           'atividades_channel',
           'Atividades',
           channelDescription: 'Notificações de atividades',
-          importance: Importance.defaultImportance,
-          priority: Priority.defaultPriority,
           icon: '@mipmap/ic_launcher',
         ),
         iOS: DarwinNotificationDetails(
@@ -98,9 +94,7 @@ class NotificationService {
     await _notifications.cancelAll();
   }
 
-  Future<List<PendingNotificationRequest>> getPendingNotifications() async {
-    return await _notifications.pendingNotificationRequests();
-  }
+  Future<List<PendingNotificationRequest>> getPendingNotifications() async => await _notifications.pendingNotificationRequests();
 
   // Agendar notificações para múltiplas atividades
   Future<void> scheduleMultipleAtividades(List<Atividade> atividades) async {

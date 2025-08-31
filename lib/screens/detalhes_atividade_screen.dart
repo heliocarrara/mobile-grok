@@ -81,7 +81,7 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
                   ),
                 ),
                 if (_atividade.concluida)
-                  Icon(
+                  const Icon(
                     Icons.check_circle,
                     color: AppTheme.successColor,
                     size: 32,
@@ -209,7 +209,7 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
                   label: const Text('Adiar Atividade'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.warningColor,
-                    side: BorderSide(color: AppTheme.warningColor),
+                    side: const BorderSide(color: AppTheme.warningColor),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -223,7 +223,7 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
                   label: const Text('Marcar como Pendente'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.infoColor,
-                    side: BorderSide(color: AppTheme.infoColor),
+                    side: const BorderSide(color: AppTheme.infoColor),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -238,7 +238,7 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
                 label: const Text('Editar Atividade'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.primaryColor,
-                  side: BorderSide(color: AppTheme.primaryColor),
+                  side: const BorderSide(color: AppTheme.primaryColor),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -252,7 +252,7 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
                 label: const Text('Excluir Atividade'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.errorColor,
-                  side: BorderSide(color: AppTheme.errorColor),
+                  side: const BorderSide(color: AppTheme.errorColor),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -470,7 +470,7 @@ class _DetalhesAtividadeScreenState extends State<DetalhesAtividadeScreen> {
       ),
     );
 
-    if (confirmacao == true) {
+    if (confirmacao ?? false) {
       await _excluirAtividade();
     }
   }

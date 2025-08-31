@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/atividade.dart';
+// ...existing code...
 import '../providers/atividade_provider.dart';
 
 class GrokApiService {
-  static final GrokApiService _instance = GrokApiService._internal();
   factory GrokApiService() => _instance;
   GrokApiService._internal();
+  static final GrokApiService _instance = GrokApiService._internal();
 
   static const String _baseUrl = 'https://api.x.ai/v1';
   String? _apiKey;
@@ -167,6 +167,32 @@ class GrokApiService {
     }
   }
 
+  // Validar chave de API fazendo uma requisição mínima
+  Future<bool> validateApiKey(String apiKey) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/chat/completions'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: jsonEncode({
+          'model': 'grok-beta',
+          'messages': [
+            {'role': 'system', 'content': 'ping'},
+            {'role': 'user', 'content': 'ping'},
+          ],
+          'max_tokens': 1,
+        }),
+      );
+
+      // 200 -> key válida; 401/403 -> inválida
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // Executar ações baseadas na resposta da IA
   Future<List<ChatAction>> _executeActions(String response, AtividadeProvider provider) async {
     final actions = <ChatAction>[];
@@ -192,8 +218,7 @@ class GrokApiService {
   }
 
   // Obter prompt do sistema
-  String _getSystemPrompt() {
-    return '''
+  String _getSystemPrompt() => '''
 Você é um assistente de IA para gerenciamento de atividades. Você ajuda o usuário a:
 
 1. Criar novas atividades
@@ -207,11 +232,9 @@ Responda de forma amigável e útil. Se o usuário quiser criar uma atividade, p
 
 Mantenha suas respostas concisas e práticas.
 ''';
-  }
 
   // Obter mensagem de ajuda
-  String _getHelpMessage() {
-    return '''
+  String _getHelpMessage() => '''
 🤖 **Comandos disponíveis:**
 
 **Básicos:**
@@ -236,20 +259,19 @@ Mantenha suas respostas concisas e práticas.
 
 Digite "ajuda" a qualquer momento para ver esta lista!
 ''';
-  }
 }
 
 // Classes de resposta
 class ChatResponse {
-  final String message;
-  final ChatResponseType type;
-  final List<ChatAction>? actions;
 
   ChatResponse({
     required this.message,
     required this.type,
     this.actions,
   });
+  final String message;
+  final ChatResponseType type;
+  final List<ChatAction>? actions;
 }
 
 enum ChatResponseType {
@@ -260,13 +282,13 @@ enum ChatResponseType {
 }
 
 class ChatAction {
-  final ChatActionType type;
-  final String message;
 
   ChatAction({
     required this.type,
     required this.message,
   });
+  final ChatActionType type;
+  final String message;
 }
 
 enum ChatActionType {

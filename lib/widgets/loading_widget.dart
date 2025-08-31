@@ -37,8 +37,8 @@ class _LoadingWidgetState extends State<LoadingWidget>
     );
 
     _rotationAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
+      begin: 0,
+      end: 1,
     ).animate(CurvedAnimation(
       parent: _rotationController,
       curve: Curves.linear,
@@ -140,7 +140,7 @@ class LoadingOverlay extends StatelessWidget {
       children: [
         child,
         if (isLoading)
-          Container(
+          ColoredBox(
             color: Colors.black.withOpacity(0.3),
             child: LoadingWidget(
               message: loadingMessage,

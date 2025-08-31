@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 import '../utils/theme.dart';
 
 class CustomProgressIndicator extends StatefulWidget {
-  final double progress;
-  final String? label;
-  final Color? color;
-  final double height;
-  final bool showPercentage;
 
   const CustomProgressIndicator({
     super.key,
@@ -16,6 +11,11 @@ class CustomProgressIndicator extends StatefulWidget {
     this.height = 12.0,
     this.showPercentage = true,
   });
+  final double progress;
+  final String? label;
+  final Color? color;
+  final double height;
+  final bool showPercentage;
 
   @override
   State<CustomProgressIndicator> createState() => _CustomProgressIndicatorState();
@@ -34,7 +34,7 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
       vsync: this,
     );
     _progressAnimation = Tween<double>(
-      begin: 0.0,
+      begin: 0,
       end: widget.progress,
     ).animate(CurvedAnimation(
       parent: _animationController,
@@ -54,7 +54,7 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
         parent: _animationController,
         curve: Curves.easeOutCubic,
       ));
-      _animationController.forward(from: 0.0);
+      _animationController.forward(from: 0);
     }
   }
 
@@ -85,15 +85,13 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
               if (widget.showPercentage)
                 AnimatedBuilder(
                   animation: _progressAnimation,
-                  builder: (context, child) {
-                    return Text(
+                  builder: (context, child) => Text(
                       '${(_progressAnimation.value * 100).toInt()}%',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: progressColor,
                         fontWeight: FontWeight.w600,
                       ),
-                    );
-                  },
+                    ),
                 ),
             ],
           ),
@@ -101,8 +99,7 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
         ],
         AnimatedBuilder(
           animation: _progressAnimation,
-          builder: (context, child) {
-            return Container(
+          builder: (context, child) => Container(
               height: widget.height,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(widget.height / 2),
@@ -178,8 +175,7 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
                     ),
                 ],
               ),
-            );
-          },
+            ),
         ),
       ],
     );
@@ -195,5 +191,83 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
     } else {
       return AppTheme.errorColor;
     }
+  }
+}
+
+Color _getProgressColor(double progress) {
+  if (progress >= 0.8) {
+    return AppTheme.successColor;
+  } else if (progress >= 0.6) {
+    return AppTheme.infoColor;
+  } else if (progress >= 0.4) {
+    return AppTheme.warningColor;
+  } else {
+    return AppTheme.errorColor;
+  }
+}
+
+// New radial indicator for dashboard
+class RadialProgressIndicator extends StatelessWidget {
+  const RadialProgressIndicator({
+    super.key,
+    required this.progress,
+    this.size = 96,
+    this.centerLabel,
+  });
+
+  final double progress;
+  final double size;
+  final String? centerLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getProgressColor(progress);
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white.withOpacity(0.04)
+                  : Colors.black.withOpacity(0.03),
+            ),
+          ),
+          SizedBox(
+            width: size,
+            height: size,
+            child: CircularProgressIndicator(
+              value: progress.clamp(0.0, 1.0),
+              strokeWidth: size * 0.12,
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              backgroundColor: color.withOpacity(0.15),
+            ),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${(progress * 100).toInt()}%',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+              ),
+              if (centerLabel != null)
+                Text(
+                  centerLabel!,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

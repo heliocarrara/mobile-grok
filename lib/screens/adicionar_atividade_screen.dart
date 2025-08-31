@@ -39,7 +39,7 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
   // widget.atividade is checked before calling this method in initState,
   // assert non-null here and use a local non-nullable variable so the
   // analyzer can treat fields as non-nullable.
-  final Atividade atividade = widget.atividade!;
+  final atividade = widget.atividade!;
   _tituloController.text = atividade.titulo;
   _descricaoController.text = atividade.descricao ?? '';
   _metaController.text = atividade.meta ?? '';
@@ -121,13 +121,12 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
     );
 
   Widget _buildCategoriaField() => DropdownButtonFormField<CategoriaEnum>(
-      value: _categoriaSelecionada,
+      initialValue: _categoriaSelecionada,
       decoration: const InputDecoration(
         labelText: 'Categoria *',
         prefixIcon: Icon(Icons.category),
       ),
-      items: CategoriaEnum.values.map((categoria) {
-        return DropdownMenuItem<CategoriaEnum>(
+      items: CategoriaEnum.values.map((categoria) => DropdownMenuItem<CategoriaEnum>(
           value: categoria,
           child: Row(
             children: [
@@ -139,8 +138,7 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
               Text(categoria.categoriaDisplayName),
             ],
           ),
-        );
-      }).toList(),
+        )).toList(),
       onChanged: (value) {
         if (value != null) {
           setState(() {
@@ -209,17 +207,15 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
     );
 
   Widget _buildRepeticaoField() => DropdownButtonFormField<RepeticaoEnum>(
-      value: _repeticaoSelecionada,
+      initialValue: _repeticaoSelecionada,
       decoration: const InputDecoration(
         labelText: 'Repetição',
         prefixIcon: Icon(Icons.repeat),
       ),
-      items: RepeticaoEnum.values.map((repeticao) {
-        return DropdownMenuItem<RepeticaoEnum>(
+      items: RepeticaoEnum.values.map((repeticao) => DropdownMenuItem<RepeticaoEnum>(
           value: repeticao,
           child: Text(repeticao.repeticaoDisplayName),
-        );
-      }).toList(),
+        )).toList(),
       onChanged: (value) {
         if (value != null) {
           setState(() {
@@ -386,7 +382,7 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
       ),
     );
 
-    if (confirmacao == true) {
+    if (confirmacao ?? false) {
       setState(() {
         _isLoading = true;
       });

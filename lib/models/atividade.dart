@@ -60,18 +60,7 @@ enum RepeticaoEnum {
 }
 
 @JsonSerializable()
-class Atividade {
-  final int? id;
-  final String titulo;
-  final String? descricao;
-  final CategoriaEnum categoria;
-  final DateTime dataHora;
-  final int? duracao; // em minutos
-  final bool concluida;
-  final RepeticaoEnum repeticao;
-  final int prioridade; // 1-5
-  final String? meta;
-  final String? jsonExtra; // para campos dinâmicos
+class Atividade { // para campos dinâmicos
 
   Atividade({
     this.id,
@@ -88,6 +77,17 @@ class Atividade {
   });
 
   factory Atividade.fromJson(Map<String, dynamic> json) => _$AtividadeFromJson(json);
+  final int? id;
+  final String titulo;
+  final String? descricao;
+  final CategoriaEnum categoria;
+  final DateTime dataHora;
+  final int? duracao; // em minutos
+  final bool concluida;
+  final RepeticaoEnum repeticao;
+  final int prioridade; // 1-5
+  final String? meta;
+  final String? jsonExtra;
   Map<String, dynamic> toJson() => _$AtividadeToJson(this);
 
   Atividade copyWith({
@@ -102,8 +102,7 @@ class Atividade {
     int? prioridade,
     String? meta,
     String? jsonExtra,
-  }) {
-    return Atividade(
+  }) => Atividade(
       id: id ?? this.id,
       titulo: titulo ?? this.titulo,
       descricao: descricao ?? this.descricao,
@@ -116,7 +115,6 @@ class Atividade {
       meta: meta ?? this.meta,
       jsonExtra: jsonExtra ?? this.jsonExtra,
     );
-  }
 
   String get categoriaDisplayName => categoria.displayName;
   String get repeticaoDisplayName => repeticao.displayName;
