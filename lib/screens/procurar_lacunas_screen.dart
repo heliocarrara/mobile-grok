@@ -17,6 +17,7 @@ class _ProcurarLacunasScreenState extends State<ProcurarLacunasScreen> {
   DateTime _selectedDate = DateTime.now();
   List<Map<String, dynamic>> _lacunas = [];
   bool _isLoading = false;
+  Map<String, dynamic> _estatisticas = {};
 
   @override
   void initState() {
@@ -38,7 +39,13 @@ class _ProcurarLacunasScreenState extends State<ProcurarLacunasScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _buildLacunasList(),
+                : Column(
+                    children: [
+                      Expanded(child: _buildLacunasList()),
+                      if (_estatisticas.isNotEmpty) _buildEstatisticas(),
+                      _buildNavigationButtons(),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -233,6 +240,9 @@ class _ProcurarLacunasScreenState extends State<ProcurarLacunasScreen> {
         }
       }
       
+      // Calcular estatísticas do dia
+      _calcularEstatisticas(atividades, lacunas);
+      
       setState(() {
         _lacunas = lacunas;
         _isLoading = false;
@@ -268,5 +278,190 @@ class _ProcurarLacunasScreenState extends State<ProcurarLacunasScreen> {
         _buscarLacunas(); // Recarregar lacunas
       }
     });
+  }
+
+  void _calcularEstatisticas(List<Atividade> atividades, List<Map<String, dynamic>> lacunas) {
+    const int totalMinutosDia = 16 * 60; // 6h às 22h = 16 horas
+    
+    // Calcular minutos preenchidos
+    int minutosPreenchidos = 0;
+    for (final atividade in atividades) {
+      minutosPreenchidos += atividade.duracao ?? 60;
+    }
+    
+    // Calcular minutos ociosos
+    int minutosOciosos = 0;
+    for (final lacuna in lacunas) {
+      minutosOciosos += lacuna['duracao'] as int;
+    }
+    
+    // Calcular porcentagem por categoria
+    Map<CategoriaEnum, int> minutosPorCategoria = {};
+    for (final atividade in atividades) {
+      final categoria = atividade.categoria;
+      final duracao = atividade.duracao ?? 60;
+      minutosPorCategoria[categoria] = (minutosPorCategoria[categoria] ?? 0) + duracao;
+    }
+    
+    Map<CategoriaEnum, double> porcentagemPorCategoria = {};
+    for (final entry in minutosPorCategoria.entries) {
+      porcentagemPorCategoria[entry.key] = (entry.value / totalMinutosDia) * 100;
+    }
+    
+    _estatisticas = {
+      'totalMinutos': totalMinutosDia,
+      'minutosPreenchidos': minutosPreenchidos,
+      'minutosOciosos': minutosOciosos,
+      'porcentagemPreenchida': (minutosPreenchidos / totalMinutosDia) * 100,
+      'porcentagemOciosa': (minutosOciosos / totalMinutosDia) * 100,
+      'porcentagemPorCategoria': porcentagemPorCategoria,
+    };
+  }
+
+  Widget _buildEstatisticas() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Estatísticas do Dia',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Progress bar para minutos preenchidos
+          _buildProgressBar(
+            'Tempo Preenchido',
+            _estatisticas['porcentagemPreenchida'],
+            AppTheme.successColor,
+            '${_estatisticas['minutosPreenchidos']} min',
+          ),
+          const SizedBox(height: 12),
+          
+          // Progress bar para minutos ociosos
+          _buildProgressBar(
+            'Tempo Ocioso',
+            _estatisticas['porcentagemOciosa'],
+            AppTheme.infoColor,
+            '${_estatisticas['minutosOciosos']} min',
+          ),
+          const SizedBox(height: 16),
+          
+          // Progress bars por categoria
+          Text(
+            'Por Categoria',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          
+          ...(_estatisticas['porcentagemPorCategoria'] as Map<CategoriaEnum, double>)
+              .entries
+              .map((entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _buildProgressBar(
+                      entry.key.displayName,
+                      entry.value,
+                      AppTheme.categoriaColors[entry.key.name] ?? AppTheme.primaryColor,
+                      '${entry.value.toStringAsFixed(1)}%',
+                    ),
+                  ))
+              .toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressBar(String label, double percentage, Color color, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(
+          value: percentage / 100,
+          backgroundColor: color.withOpacity(0.2),
+          valueColor: AlwaysStoppedAnimation<Color>(color),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavigationButtons() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                setState(() {
+                  _selectedDate = _selectedDate.subtract(const Duration(days: 1));
+                });
+                await _buscarLacunas();
+              },
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Dia Anterior'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                setState(() {
+                  _selectedDate = _selectedDate.add(const Duration(days: 1));
+                });
+                await _buscarLacunas();
+              },
+              icon: const Icon(Icons.arrow_forward),
+              label: const Text('Próximo Dia'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

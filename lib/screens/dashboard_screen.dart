@@ -19,6 +19,7 @@ import 'nfc_share_screen.dart';
 import 'nfc_receive_screen.dart';
 import 'qr_share_screen.dart';
 import 'qr_receive_screen.dart';
+import 'ciclo_sono_screen.dart';
 import '../services/database_service.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -162,7 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
 
   Widget _buildSliverAppBar() => SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 80,
       floating: false,
       pinned: true,
       centerTitle: false,
@@ -175,32 +176,37 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
               child: Row(
                 children: [
+                  // Menu button
+                  Builder(
+                    builder: (context) => IconButton(
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                      icon: const Icon(Icons.menu, color: Colors.white),
+                      tooltip: 'Menu',
+                    ),
+                  ),
+                  // Welcome text - flexible to adapt to available space
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _nomeUsuario.isEmpty ? 'Mobile Grok' : 'Bem-vindo, $_nomeUsuario',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _nomeUsuario.isEmpty ? 'Bem-vindo' : 'Bem-vindo, $_nomeUsuario',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Organize sua vida com IA',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                  // Action buttons in header
+                  // Add button
                   IconButton(
                     onPressed: () async {
                       final result = await Navigator.push(
@@ -264,13 +270,17 @@ class _DashboardScreenState extends State<DashboardScreen>
                   color: AppTheme.primaryColor,
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  DateFormat('EEEE, d \'de\' MMMM', 'pt_BR').format(_selectedDate),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    DateFormat('EEEE, d \'de\' MMMM', 'pt_BR').format(_selectedDate),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Icon(
                   Icons.keyboard_arrow_down,
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
@@ -1065,6 +1075,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                           context,
                           MaterialPageRoute(builder: (context) => const CategoriasScreen()),
                         );
+                      },
+                    ),
+                    _buildDrawerItem(
+                      icon: Icons.bedtime,
+                      title: 'Ciclo de Sono',
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CicloSonoScreen()),
+                        );
+                        await _loadData();
                       },
                     ),
                     const SizedBox(height: 8),

@@ -270,4 +270,15 @@ class AtividadeProvider with ChangeNotifier {
       return false;
     }
   }
+
+  // Obter atividades por data específica
+  Future<List<Atividade>> getAtividadesByDate(DateTime date) async {
+    try {
+      return await _databaseService.getAtividadesByDate(date);
+    } catch (e) {
+      _error = 'Erro ao buscar atividades por data: $e';
+      notifyListeners();
+      return [];
+    }
+  }
 }

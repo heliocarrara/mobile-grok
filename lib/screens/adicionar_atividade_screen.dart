@@ -403,6 +403,15 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
         if (_repeticaoSelecionada == RepeticaoEnum.semanal && _diasSemanaSelecionados.isNotEmpty) {
           // Create multiple activities for selected weekdays
           await _criarAtividadesSemanais(provider);
+        } else if (_repeticaoSelecionada == RepeticaoEnum.diaria) {
+          // Create daily activities for 7 days
+          await _criarAtividadesDiarias(provider);
+        } else if (_repeticaoSelecionada == RepeticaoEnum.semanal) {
+          // Create weekly activities for 4 weeks
+          await _criarAtividadesSemanaisSimples(provider);
+        } else if (_repeticaoSelecionada == RepeticaoEnum.mensal) {
+          // Create monthly activities for 2 times
+          await _criarAtividadesMensais(provider);
         } else {
           // Create single activity
           final atividade = Atividade(
@@ -499,6 +508,129 @@ class _AdicionarAtividadeScreenState extends State<AdicionarAtividadeScreen> {
       baseDate.hour,
       baseDate.minute,
     );
+  }
+
+  Future<void> _criarAtividadesDiarias(AtividadeProvider provider) async {
+    int successCount = 0;
+    final baseDate = _dataHoraSelecionada;
+    
+    // Create activities for 7 consecutive days
+    for (int i = 0; i < 7; i++) {
+      final targetDate = baseDate.add(Duration(days: i));
+      
+      final atividade = Atividade(
+        titulo: _tituloController.text.trim(),
+        descricao: _descricaoController.text.trim().isEmpty 
+            ? null 
+            : _descricaoController.text.trim(),
+        categoria: _categoriaSelecionada,
+        dataHora: targetDate,
+        duracao: _duracao,
+        repeticao: RepeticaoEnum.diaria,
+        prioridade: _prioridadeSelecionada,
+        meta: _metaController.text.trim().isEmpty 
+            ? null 
+            : _metaController.text.trim(),
+        notificationTiming: _notificationTiming,
+      );
+      
+      final success = await provider.addAtividade(atividade);
+      if (success) successCount++;
+    }
+    
+    if (mounted) {
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$successCount atividade${successCount != 1 ? 's' : ''} diária${successCount != 1 ? 's' : ''} criada${successCount != 1 ? 's' : ''} com sucesso!'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+    }
+  }
+
+  Future<void> _criarAtividadesSemanaisSimples(AtividadeProvider provider) async {
+    int successCount = 0;
+    final baseDate = _dataHoraSelecionada;
+    
+    // Create activities for 4 consecutive weeks (same day of week)
+    for (int i = 0; i < 4; i++) {
+      final targetDate = baseDate.add(Duration(days: i * 7));
+      
+      final atividade = Atividade(
+        titulo: _tituloController.text.trim(),
+        descricao: _descricaoController.text.trim().isEmpty 
+            ? null 
+            : _descricaoController.text.trim(),
+        categoria: _categoriaSelecionada,
+        dataHora: targetDate,
+        duracao: _duracao,
+        repeticao: RepeticaoEnum.semanal,
+        prioridade: _prioridadeSelecionada,
+        meta: _metaController.text.trim().isEmpty 
+            ? null 
+            : _metaController.text.trim(),
+        notificationTiming: _notificationTiming,
+      );
+      
+      final success = await provider.addAtividade(atividade);
+      if (success) successCount++;
+    }
+    
+    if (mounted) {
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$successCount atividade${successCount != 1 ? 's' : ''} semanal${successCount != 1 ? 'is' : ''} criada${successCount != 1 ? 's' : ''} com sucesso!'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+    }
+  }
+
+  Future<void> _criarAtividadesMensais(AtividadeProvider provider) async {
+    int successCount = 0;
+    final baseDate = _dataHoraSelecionada;
+    
+    // Create activities for 2 consecutive months (same day of month)
+    for (int i = 0; i < 2; i++) {
+      final targetDate = DateTime(
+        baseDate.year,
+        baseDate.month + i,
+        baseDate.day,
+        baseDate.hour,
+        baseDate.minute,
+      );
+      
+      final atividade = Atividade(
+        titulo: _tituloController.text.trim(),
+        descricao: _descricaoController.text.trim().isEmpty 
+            ? null 
+            : _descricaoController.text.trim(),
+        categoria: _categoriaSelecionada,
+        dataHora: targetDate,
+        duracao: _duracao,
+        repeticao: RepeticaoEnum.mensal,
+        prioridade: _prioridadeSelecionada,
+        meta: _metaController.text.trim().isEmpty 
+            ? null 
+            : _metaController.text.trim(),
+        notificationTiming: _notificationTiming,
+      );
+      
+      final success = await provider.addAtividade(atividade);
+      if (success) successCount++;
+    }
+    
+    if (mounted) {
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$successCount atividade${successCount != 1 ? 's' : ''} mensal${successCount != 1 ? 'is' : ''} criada${successCount != 1 ? 's' : ''} com sucesso!'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+    }
   }
 
   void _handleSaveResult(bool success, AtividadeProvider provider, {bool isUpdate = false}) {

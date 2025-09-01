@@ -47,8 +47,8 @@ class BackupService {
       // Converter para JSON
       final jsonString = jsonEncode(backupData);
       
-      // Salvar arquivo
-      final directory = await getApplicationDocumentsDirectory();
+      // Salvar arquivo na pasta padrão do Android (Downloads)
+      final directory = await _getBackupDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'mobile_grok_backup_$timestamp.json';
       final file = File('${directory.path}/$fileName');
@@ -143,10 +143,25 @@ class BackupService {
     return true; // Para iOS, não precisamos de permissão especial
   }
 
+  // Obter diretório padrão para backups
+  Future<Directory> _getBackupDirectory() async {
+    if (Platform.isAndroid) {
+      // Usar pasta Downloads no Android
+      final directory = Directory('/storage/emulated/0/Download/MobileGrok');
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+      return directory;
+    } else {
+      // Para iOS, usar Documents
+      return await getApplicationDocumentsDirectory();
+    }
+  }
+
   // Obter lista de backups disponíveis
   Future<List<File>> getAvailableBackups() async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
+      final directory = await _getBackupDirectory();
       final files = directory.listSync();
       
       return files
